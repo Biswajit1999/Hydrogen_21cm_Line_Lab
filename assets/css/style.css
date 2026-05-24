@@ -92,13 +92,27 @@ button {
   cursor: pointer;
 }
 
-.plots { display: grid; gap: 1rem; }
+.plots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.plots .panel:first-child,
+.plots .panel:last-child {
+  grid-column: 1 / -1;
+}
+
+.split canvas {
+  aspect-ratio: 1.14;
+  object-fit: contain;
+}
 .panel-title { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: .8rem; }
 canvas { display: block; width: 100%; height: auto; background: #0d1116; border-radius: 6px; }
 
 .equations {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
+  grid-template-columns: repeat(5, minmax(0,1fr));
   gap: .8rem;
   margin-top: 1rem;
 }
@@ -127,6 +141,10 @@ canvas { display: block; width: 100%; height: auto; background: #0d1116; border-
 }
 
 @media (max-width: 760px) {
-  .metrics, .equations { grid-template-columns: 1fr; }
+  .metrics, .equations, .plots { grid-template-columns: 1fr; }
+  .plots .panel:first-child,
+  .plots .panel:last-child {
+    grid-column: auto;
+  }
   h1 { font-size: 2.45rem; }
 }

@@ -8,6 +8,21 @@ from pathlib import Path
 
 REST_FREQ_MHZ = 1420.40575177
 COLUMN_FACTOR = 1.823e18
+R0_KPC = 8.2
+
+
+def galactic_components(longitude_deg: float, theta0: float, tau_peak: float) -> list[dict[str, float]]:
+    longitude = math.radians(longitude_deg)
+    sin_l = max(0.05, math.sin(longitude))
+    tangent_velocity = theta0 * (1.0 - sin_l)
+    local_arm = 8.0 * math.sin(2.0 * longitude)
+    perseus_arm = -45.0 * math.sin(longitude) if longitude_deg < 95.0 else -25.0 * math.sin(longitude)
+    inner_arm = tangent_velocity if longitude_deg < 90.0 else -0.35 * theta0 * math.sin(longitude)
+    return [
+        {"name": "local gas", "velocity_km_s": local_arm, "tau": tau_peak * 0.85, "width_scale": 1.1, "radius_kpc": R0_KPC},
+        {"name": "inner/tangent gas", "velocity_km_s": inner_arm, "tau": tau_peak * (1.25 if longitude_deg < 90.0 else 0.45), "width_scale": 0.85, "radius_kpc": max(R0_KPC * sin_l, 2.2)},
+        {"name": "outer arm", "velocity_km_s": perseus_arm, "tau": tau_peak * 0.55, "width_scale": 1.35, "radius_kpc": 10.8},
+    ]
 
 
 def generate_spectrum(
@@ -15,9 +30,12 @@ def generate_spectrum(
     continuum: float = 2.73,
     tau_peak: float = 0.12,
     sigma_velocity: float = 9.0,
+    longitude_deg: float = 35.0,
+    theta0: float = 220.0,
     samples: int = 420,
 ) -> tuple[list[dict[str, float]], float]:
-    span = max(80.0, sigma_velocity * 8.0)
+    span = 360.0
+    components = galactic_components(longitude_deg, theta0, tau_peak)
     rows: list[dict[str, float]] = []
     integral = 0.0
     last_v: float | None = None
@@ -25,7 +43,10 @@ def generate_spectrum(
 
     for index in range(samples):
         velocity = -span / 2.0 + span * index / (samples - 1)
-        tau = tau_peak * math.exp(-0.5 * (velocity / sigma_velocity) ** 2)
+        tau = 0.0
+        for component in components:
+            sigma = sigma_velocity * component["width_scale"]
+            tau += component["tau"] * math.exp(-0.5 * ((velocity - component["velocity_km_s"]) / sigma) ** 2)
         tb = (spin_temperature - continuum) * (1.0 - math.exp(-tau))
         thin_tb = (spin_temperature - continuum) * tau
         if last_v is not None and last_tb is not None:

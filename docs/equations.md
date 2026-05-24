@@ -57,3 +57,15 @@ N_HI = 1.823e18 integral T_B(v) dv   cm^-2
 ```
 
 where `T_B` is measured in kelvin and `dv` in km/s.
+
+## Galactic Rotation Motivation
+
+For circular rotation in the Galactic plane, the standard line-of-sight velocity form is:
+
+```text
+v_los = [Theta(R) R0/R - Theta0] sin(l)
+```
+
+where `R0` and `Theta0` are the Sun's Galactocentric radius and circular speed, `R` is the gas Galactocentric radius, and `l` is Galactic longitude.
+
+The browser uses a simplified, pedagogical multi-component approximation inspired by this relationship. It is designed to show why H I spectral peaks shift with Galactic longitude and why longitude-velocity diagrams are central to 21 cm survey analysis.

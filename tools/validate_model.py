@@ -6,7 +6,7 @@ import csv
 import math
 from pathlib import Path
 
-from generate_21cm_spectrum import REST_FREQ_MHZ, generate_spectrum
+from generate_21cm_spectrum import REST_FREQ_MHZ, galactic_components, generate_spectrum
 
 C_KM_S = 299792.458
 COLUMN_FACTOR = 1.823e18
@@ -23,6 +23,8 @@ def radio_velocity(nu_obs: float) -> float:
 def main() -> None:
     rows_narrow, n_narrow = generate_spectrum(sigma_velocity=8.0, tau_peak=0.01)
     rows_wide, n_wide = generate_spectrum(sigma_velocity=16.0, tau_peak=0.01)
+    inner_low_longitude = galactic_components(25.0, 220.0, 0.12)[1]["velocity_km_s"]
+    inner_high_longitude = galactic_components(60.0, 220.0, 0.12)[1]["velocity_km_s"]
     small_tau = 1e-4
     thin_error = abs((1.0 - math.exp(-small_tau)) / small_tau - 1.0)
 
@@ -35,6 +37,7 @@ def main() -> None:
         {"check": "optically_thin_limit_error", "value": thin_error, "expected": "< 1e-3", "passed": thin_error < 1e-3},
         {"check": "width_increases_column_density", "value": n_wide / n_narrow, "expected": "> 1", "passed": n_wide > n_narrow},
         {"check": "synthetic_rows", "value": len(rows_narrow), "expected": 420, "passed": len(rows_narrow) == 420},
+        {"check": "inner_galaxy_tangent_velocity_trend", "value": inner_low_longitude > inner_high_longitude, "expected": True, "passed": inner_low_longitude > inner_high_longitude},
     ]
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["check", "value", "expected", "passed"])

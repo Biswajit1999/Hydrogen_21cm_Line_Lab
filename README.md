@@ -1,6 +1,6 @@
 # Hydrogen 21 cm Line Lab
 
-Interactive radio astronomy laboratory for the neutral hydrogen 21 cm hyperfine line, redshifted observing frequency, Doppler velocity, line broadening, optical depth, brightness temperature, and H I column density.
+Interactive radio astronomy laboratory for the neutral hydrogen 21 cm hyperfine line, redshifted observing frequency, Doppler velocity, Galactic rotation signatures, longitude-velocity structure, line broadening, optical depth, brightness temperature, and H I column density.
 
 **Author:** Biswajit Jana
 
@@ -30,6 +30,14 @@ For the radio Doppler convention:
 v = c (nu_0 - nu_obs) / nu_0
 ```
 
+For a simplified axisymmetric Milky Way rotation model, the line-of-sight velocity is:
+
+```text
+v_los = [Theta(R) R0/R - Theta0] sin(l)
+```
+
+The browser uses this relationship as the physical motivation for synthetic longitude-dependent H I velocity components. The visual model is intentionally simplified so that the line shift can be explored interactively without requiring a full Galactic mass model.
+
 The brightness temperature for a simple slab against a continuum background is modelled as:
 
 ```text
@@ -48,6 +56,9 @@ where `T_B` is in kelvin and `dv` is in km/s.
 
 - Interactive redshift and observed-frequency readout.
 - Radio Doppler velocity estimate.
+- Milky Way top-down line-of-sight view.
+- Synthetic longitude-velocity diagram for Galactic H I structure.
+- Multi-component H I spectrum whose peaks shift with Galactic longitude.
 - Gaussian optical-depth line profile.
 - Brightness temperature spectrum compared with optically thin approximation.
 - H I column density estimate from the synthetic line integral.
@@ -58,6 +69,8 @@ where `T_B` is in kelvin and `dv` is in km/s.
 ## Research Use Cases
 
 - Teaching how rest frequency, redshift, and radio velocity are connected.
+- Demonstrating why 21 cm surveys produce longitude-velocity maps rather than a single universal line centre.
+- Exploring how Galactic rotation shifts H I components along different lines of sight.
 - Building intuition for optically thin H I column-density estimates.
 - Creating synthetic 21 cm spectra for plotting and dashboard workflows.
 - Serving as a foundation for future H I rotation-curve and Galactic longitude-velocity visualisations.
@@ -76,6 +89,7 @@ python tools/validate_model.py
 ## Limitations
 
 - Uses a single Gaussian line component.
+- The Galactic rotation panel is a simplified educational model and not a fitted Milky Way rotation curve.
 - Does not model real telescope beams, calibration, receiver noise, baseline subtraction, self-absorption, multiple gas phases, or radiative transfer through complex Galactic structure.
 - Uses synthetic data only.
 - The radio velocity convention is appropriate for nearby sources; relativistic and optical conventions are not yet implemented.

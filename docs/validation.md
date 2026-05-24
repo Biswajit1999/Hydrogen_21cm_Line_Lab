@@ -22,6 +22,10 @@
 
    At fixed peak optical depth and spin temperature, increasing the velocity width increases the integrated column density.
 
+6. **Longitude-velocity behaviour**
+
+   In the first Galactic quadrant, the synthetic tangent component should move toward higher positive velocity at smaller longitude, qualitatively matching the expected behaviour for inner-Galaxy H I in a flat rotation model.
+
 ## Scientific Scope
 
 The validation checks the internal consistency of a one-component educational model. It does not validate real telescope calibration, baseline subtraction, multi-component H I fitting, or interferometric imaging products.

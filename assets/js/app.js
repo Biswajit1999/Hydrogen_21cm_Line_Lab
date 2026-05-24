@@ -2,10 +2,14 @@ const REST_FREQ_MHZ = 1420.40575177;
 const C_KM_S = 299792.458;
 const COLUMN_FACTOR = 1.823e18;
 
-const ids = ["redshift", "spinTemperature", "tauPeak", "sigmaVelocity", "continuum"];
+const R0_KPC = 8.2;
+
+const ids = ["longitude", "rotationSpeed", "redshift", "spinTemperature", "tauPeak", "sigmaVelocity", "continuum"];
 const inputs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 const out = {
   redshift: document.getElementById("redshiftOut"),
+  longitude: document.getElementById("longitudeOut"),
+  rotation: document.getElementById("rotationOut"),
   spin: document.getElementById("spinOut"),
   tau: document.getElementById("tauOut"),
   sigma: document.getElementById("sigmaOut"),
@@ -50,6 +54,8 @@ function drawAxes(ctx, width, height, yLabel, xLabel) {
 }
 
 function model() {
+  const longitude = value("longitude");
+  const rotationSpeed = value("rotationSpeed");
   const redshift = value("redshift");
   const spinTemperature = value("spinTemperature");
   const tauPeak = value("tauPeak");
@@ -57,16 +63,20 @@ function model() {
   const continuum = value("continuum");
   const observedFreq = REST_FREQ_MHZ / (1 + redshift);
   const velocity = C_KM_S * (REST_FREQ_MHZ - observedFreq) / REST_FREQ_MHZ;
-  const samples = 420;
-  const span = Math.max(80, sigmaVelocity * 8);
+  const samples = 520;
+  const span = 360;
   const points = [];
+  const components = galacticComponents(longitude, rotationSpeed, tauPeak);
   let integral = 0;
   let lastV = null;
   let lastTb = null;
 
   for (let i = 0; i < samples; i += 1) {
     const v = -span / 2 + (span * i) / (samples - 1);
-    const tau = tauPeak * Math.exp(-0.5 * (v / sigmaVelocity) ** 2);
+    const tau = components.reduce((sum, component) => {
+      const sigma = sigmaVelocity * component.widthScale;
+      return sum + component.tau * Math.exp(-0.5 * ((v - component.velocity) / sigma) ** 2);
+    }, 0);
     const tb = (spinTemperature - continuum) * (1 - Math.exp(-tau));
     const thinTb = (spinTemperature - continuum) * tau;
     points.push({ velocity: v, brightness: tb, thinBrightness: thinTb, tau });
@@ -75,7 +85,21 @@ function model() {
     lastTb = tb;
   }
 
-  return { redshift, spinTemperature, tauPeak, sigmaVelocity, continuum, observedFreq, velocity, points, columnDensity: COLUMN_FACTOR * integral };
+  return { longitude, rotationSpeed, redshift, spinTemperature, tauPeak, sigmaVelocity, continuum, observedFreq, velocity, points, components, columnDensity: COLUMN_FACTOR * integral };
+}
+
+function galacticComponents(longitudeDeg, theta0, tauPeak) {
+  const l = longitudeDeg * Math.PI / 180;
+  const sinL = Math.max(0.05, Math.sin(l));
+  const tangentVelocity = theta0 * (1 - sinL);
+  const localArm = 8 * Math.sin(2 * l);
+  const perseusArm = longitudeDeg < 95 ? -45 * Math.sin(l) : -25 * Math.sin(l);
+  const innerArm = longitudeDeg < 90 ? tangentVelocity : -0.35 * theta0 * Math.sin(l);
+  return [
+    { name: "local gas", velocity: localArm, tau: tauPeak * 0.85, widthScale: 1.1, radius: R0_KPC },
+    { name: "inner/tangent gas", velocity: innerArm, tau: tauPeak * (longitudeDeg < 90 ? 1.25 : 0.45), widthScale: 0.85, radius: Math.max(R0_KPC * sinL, 2.2) },
+    { name: "outer arm", velocity: perseusArm, tau: tauPeak * 0.55, widthScale: 1.35, radius: 10.8 },
+  ];
 }
 
 function plotSpectrum(data) {
@@ -104,8 +128,114 @@ function plotSpectrum(data) {
 
   line("thinBrightness", "rgba(244,191,117,.7)", 1.7);
   line("brightness", "#66d9ef", 2.5);
+  ctx.fillStyle = "#83e6a2";
+  data.components.forEach((component) => {
+    const x = px(component.velocity);
+    ctx.strokeStyle = "rgba(131,230,162,.32)";
+    ctx.beginPath();
+    ctx.moveTo(x, pad.top);
+    ctx.lineTo(x, height - pad.bottom);
+    ctx.stroke();
+    ctx.fillText(component.name, Math.min(x + 6, width - 120), pad.top + 16);
+  });
   ctx.fillStyle = "#aab5bd";
-  ctx.fillText("cyan: radiative transfer   gold: optically thin approximation", pad.left, height - 14);
+  ctx.fillText("cyan: radiative transfer   gold: optically thin approximation   green: H I components", pad.left, height - 14);
+}
+
+function plotGalaxy(data) {
+  const { ctx, width, height } = setup(document.getElementById("galaxyCanvas"));
+  ctx.fillStyle = "#0d1116";
+  ctx.fillRect(0, 0, width, height);
+  const cx = width / 2;
+  const cy = height / 2;
+  const scale = Math.min(width, height) / 30;
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  for (let r = 4; r <= 14; r += 2) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  for (let arm = 0; arm < 4; arm += 1) {
+    ctx.strokeStyle = arm % 2 ? "rgba(102,217,239,.28)" : "rgba(131,230,162,.22)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < 260; i += 1) {
+      const t = i / 24 + arm * Math.PI / 2;
+      const r = 2.1 + 0.42 * t;
+      const x = cx + r * Math.cos(t) * scale;
+      const y = cy + r * Math.sin(t) * scale;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  const sunX = cx + R0_KPC * scale;
+  const sunY = cy;
+  const l = data.longitude * Math.PI / 180;
+  const rayLength = 16 * scale;
+  const rayX = sunX - Math.cos(l) * rayLength;
+  const rayY = sunY - Math.sin(l) * rayLength;
+  ctx.strokeStyle = "#f4bf75";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(sunX, sunY);
+  ctx.lineTo(rayX, rayY);
+  ctx.stroke();
+  ctx.fillStyle = "#f4bf75";
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#aab5bd";
+  ctx.font = "12px system-ui";
+  ctx.fillText("Sun", sunX + 8, sunY - 8);
+  ctx.fillText(`l = ${data.longitude.toFixed(0)} deg`, 16, 24);
+}
+
+function plotLongitudeVelocity(data) {
+  const { ctx, width, height } = setup(document.getElementById("lvCanvas"));
+  ctx.fillStyle = "#0d1116";
+  ctx.fillRect(0, 0, width, height);
+  const lMin = 0;
+  const lMax = 180;
+  const vMin = -180;
+  const vMax = 180;
+  const rows = 120;
+  const cols = 180;
+  for (let ix = 0; ix < cols; ix += 1) {
+    const longitude = lMin + (lMax - lMin) * ix / (cols - 1);
+    const components = galacticComponents(longitude, data.rotationSpeed, data.tauPeak);
+    for (let iy = 0; iy < rows; iy += 1) {
+      const velocity = vMax - (vMax - vMin) * iy / (rows - 1);
+      let intensity = 0;
+      components.forEach((component) => {
+        const sigma = data.sigmaVelocity * component.widthScale;
+        intensity += component.tau * Math.exp(-0.5 * ((velocity - component.velocity) / sigma) ** 2);
+      });
+      intensity = Math.min(1, intensity / Math.max(0.1, data.tauPeak * 1.4));
+      ctx.fillStyle = heat(intensity);
+      ctx.fillRect(ix * width / cols, iy * height / rows, width / cols + 1, height / rows + 1);
+    }
+  }
+  const selectedX = (data.longitude - lMin) / (lMax - lMin) * width;
+  ctx.strokeStyle = "#f4bf75";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(selectedX, 0);
+  ctx.lineTo(selectedX, height);
+  ctx.stroke();
+  ctx.fillStyle = "#aab5bd";
+  ctx.font = "12px system-ui";
+  ctx.fillText("Galactic longitude", width - 128, height - 14);
+  ctx.fillText("v_los", 12, 22);
+}
+
+function heat(t) {
+  const r = Math.round(13 + 230 * t);
+  const g = Math.round(29 + 160 * Math.max(0, t - 0.1));
+  const b = Math.round(48 + 170 * (1 - t));
+  return `rgb(${r},${g},${b})`;
 }
 
 function plotFrequency(data) {
@@ -136,6 +266,8 @@ function plotFrequency(data) {
 
 function updateLabels(data) {
   out.redshift.textContent = data.redshift.toFixed(3);
+  out.longitude.textContent = `${data.longitude.toFixed(0)} deg`;
+  out.rotation.textContent = `${data.rotationSpeed.toFixed(0)} km/s`;
   out.spin.textContent = `${data.spinTemperature.toFixed(0)} K`;
   out.tau.textContent = data.tauPeak.toFixed(3);
   out.sigma.textContent = `${data.sigmaVelocity.toFixed(1)} km/s`;
@@ -150,6 +282,8 @@ function render() {
   latestSpectrum = data.points;
   updateLabels(data);
   plotSpectrum(data);
+  plotGalaxy(data);
+  plotLongitudeVelocity(data);
   plotFrequency(data);
 }
 

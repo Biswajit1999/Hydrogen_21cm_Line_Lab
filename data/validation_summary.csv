@@ -3,5 +3,6 @@ zero_redshift_frequency,1420.40575177,1420.40575177,True
 redshift_decreases_frequency,True,True,True
 positive_radio_velocity_for_redshift,2968.2421584158496,> 0,True
 optically_thin_limit_error,4.999833336150061e-05,< 1e-3,True
-width_increases_column_density,1.9998739536114163,> 1,True
+width_increases_column_density,1.998742395588547,> 1,True
 synthetic_rows,420,420,True
+inner_galaxy_tangent_velocity_trend,True,True,True
