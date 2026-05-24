@@ -25,6 +25,18 @@ def galactic_components(longitude_deg: float, theta0: float, tau_peak: float) ->
     ]
 
 
+def tangent_point(longitude_deg: float, theta0: float) -> dict[str, float | None]:
+    longitude = math.radians(longitude_deg)
+    radius = R0_KPC * abs(math.sin(longitude))
+    if 0.0 < longitude_deg < 90.0:
+        velocity = theta0 * (1.0 - abs(math.sin(longitude)))
+        frequency = REST_FREQ_MHZ * (1.0 - velocity / 299792.458)
+    else:
+        velocity = None
+        frequency = None
+    return {"longitude_deg": longitude_deg, "radius_kpc": radius, "velocity_km_s": velocity, "frequency_mhz": frequency}
+
+
 def generate_spectrum(
     spin_temperature: float = 120.0,
     continuum: float = 2.73,
@@ -75,6 +87,14 @@ def main() -> None:
         writer.writerows(rows)
     print(f"Wrote {output}")
     print(f"N_HI = {column_density:.3e} cm^-2")
+
+    rotation_output = Path(__file__).resolve().parents[1] / "data" / "tangent_point_table.csv"
+    with rotation_output.open("w", newline="", encoding="utf-8") as handle:
+      writer = csv.DictWriter(handle, fieldnames=["longitude_deg", "radius_kpc", "velocity_km_s", "frequency_mhz"])
+      writer.writeheader()
+      for longitude in range(5, 90):
+          writer.writerow(tangent_point(float(longitude), 220.0))
+    print(f"Wrote {rotation_output}")
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ h2 { margin: 0; font-size: 1rem; }
 }
 
 .metrics div { min-height: 4.1rem; padding: .85rem; }
-.metrics span, .panel-title span { display: block; color: var(--muted); font-size: .75rem; }
+.metrics span, .panel-title span, .diagnostics span { display: block; color: var(--muted); font-size: .75rem; }
 .metrics strong { display: block; margin-top: .32rem; font-size: 1.02rem; }
 
 .layout {
@@ -99,8 +99,27 @@ button {
 }
 
 .plots .panel:first-child,
+.plots .panel:nth-child(2),
 .plots .panel:last-child {
   grid-column: 1 / -1;
+}
+
+.diagnostics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.diagnostics div {
+  padding: .8rem;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+}
+
+.diagnostics strong {
+  display: block;
+  margin-top: .3rem;
 }
 
 .split canvas {
@@ -143,7 +162,9 @@ canvas { display: block; width: 100%; height: auto; background: #0d1116; border-
 @media (max-width: 760px) {
   .metrics, .equations, .plots { grid-template-columns: 1fr; }
   .plots .panel:first-child,
-  .plots .panel:last-child {
+  .plots .panel:nth-child(2),
+  .plots .panel:last-child,
+  .diagnostics {
     grid-column: auto;
   }
   h1 { font-size: 2.45rem; }

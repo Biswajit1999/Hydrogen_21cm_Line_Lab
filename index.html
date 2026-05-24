@@ -36,6 +36,24 @@
         </aside>
 
         <section class="plots">
+          <article class="panel diagnostics">
+            <div>
+              <span>Tangent radius</span>
+              <strong id="tangentRadius">0.00 kpc</strong>
+            </div>
+            <div>
+              <span>Tangent velocity</span>
+              <strong id="tangentVelocity">0.0 km/s</strong>
+            </div>
+            <div>
+              <span>Tangent frequency</span>
+              <strong id="tangentFrequency">1420.405 MHz</strong>
+            </div>
+            <div>
+              <span>Peak channels</span>
+              <strong id="peakChannels">0</strong>
+            </div>
+          </article>
           <article class="panel">
             <div class="panel-title">
               <h2>Milky Way H I Spectrum</h2>
@@ -60,9 +78,16 @@
           <article class="panel">
             <div class="panel-title">
               <h2>Observed Frequency Shift</h2>
-              <span>rest frame to receiver band</span>
+              <span>receiver band with Galactic velocity markers</span>
             </div>
             <canvas id="frequencyCanvas" width="980" height="280"></canvas>
+          </article>
+          <article class="panel">
+            <div class="panel-title">
+              <h2>Tangent-Point Rotation Diagnostic</h2>
+              <span>inner-Galaxy approximation for 0 &lt; l &lt; 90 deg</span>
+            </div>
+            <canvas id="rotationCanvas" width="980" height="300"></canvas>
           </article>
         </section>
       </section>

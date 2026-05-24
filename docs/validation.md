@@ -26,6 +26,10 @@
 
    In the first Galactic quadrant, the synthetic tangent component should move toward higher positive velocity at smaller longitude, qualitatively matching the expected behaviour for inner-Galaxy H I in a flat rotation model.
 
+7. **Tangent radius check**
+
+   At `l = 30 deg`, `R_t = R0 sin(l)` should be approximately `4.1 kpc` for `R0 = 8.2 kpc`.
+
 ## Scientific Scope
 
 The validation checks the internal consistency of a one-component educational model. It does not validate real telescope calibration, baseline subtraction, multi-component H I fitting, or interferometric imaging products.

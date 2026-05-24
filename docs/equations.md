@@ -69,3 +69,19 @@ v_los = [Theta(R) R0/R - Theta0] sin(l)
 where `R0` and `Theta0` are the Sun's Galactocentric radius and circular speed, `R` is the gas Galactocentric radius, and `l` is Galactic longitude.
 
 The browser uses a simplified, pedagogical multi-component approximation inspired by this relationship. It is designed to show why H I spectral peaks shift with Galactic longitude and why longitude-velocity diagrams are central to 21 cm survey analysis.
+
+## Tangent-Point Approximation
+
+For inner-Galaxy lines of sight with `0 < l < 90 deg`, the tangent-point radius is:
+
+```text
+R_t = R0 sin(l)
+```
+
+For a flat rotation curve `Theta(R) = Theta0`, the idealised terminal velocity becomes:
+
+```text
+v_t ~= Theta0 [1 - sin(l)]
+```
+
+This is used as a diagnostic curve, not as a fitted Milky Way rotation curve.

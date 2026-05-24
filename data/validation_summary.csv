@@ -6,3 +6,5 @@ optically_thin_limit_error,4.999833336150061e-05,< 1e-3,True
 width_increases_column_density,1.998742395588547,> 1,True
 synthetic_rows,420,420,True
 inner_galaxy_tangent_velocity_trend,True,True,True
+tangent_radius_at_30deg,4.099999999999999,4.1,True
+positive_tangent_velocity,110.0,> 0,True

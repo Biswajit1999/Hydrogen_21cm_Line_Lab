@@ -6,7 +6,7 @@ import csv
 import math
 from pathlib import Path
 
-from generate_21cm_spectrum import REST_FREQ_MHZ, galactic_components, generate_spectrum
+from generate_21cm_spectrum import REST_FREQ_MHZ, galactic_components, generate_spectrum, tangent_point
 
 C_KM_S = 299792.458
 COLUMN_FACTOR = 1.823e18
@@ -25,6 +25,7 @@ def main() -> None:
     rows_wide, n_wide = generate_spectrum(sigma_velocity=16.0, tau_peak=0.01)
     inner_low_longitude = galactic_components(25.0, 220.0, 0.12)[1]["velocity_km_s"]
     inner_high_longitude = galactic_components(60.0, 220.0, 0.12)[1]["velocity_km_s"]
+    tangent = tangent_point(30.0, 220.0)
     small_tau = 1e-4
     thin_error = abs((1.0 - math.exp(-small_tau)) / small_tau - 1.0)
 
@@ -38,6 +39,8 @@ def main() -> None:
         {"check": "width_increases_column_density", "value": n_wide / n_narrow, "expected": "> 1", "passed": n_wide > n_narrow},
         {"check": "synthetic_rows", "value": len(rows_narrow), "expected": 420, "passed": len(rows_narrow) == 420},
         {"check": "inner_galaxy_tangent_velocity_trend", "value": inner_low_longitude > inner_high_longitude, "expected": True, "passed": inner_low_longitude > inner_high_longitude},
+        {"check": "tangent_radius_at_30deg", "value": tangent["radius_kpc"], "expected": 4.1, "passed": math.isclose(float(tangent["radius_kpc"]), 4.1, rel_tol=0.02)},
+        {"check": "positive_tangent_velocity", "value": tangent["velocity_km_s"], "expected": "> 0", "passed": float(tangent["velocity_km_s"]) > 0},
     ]
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["check", "value", "expected", "passed"])

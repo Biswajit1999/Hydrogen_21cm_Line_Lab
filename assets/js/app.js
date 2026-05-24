@@ -17,6 +17,10 @@ const out = {
   observedFrequency: document.getElementById("observedFrequency"),
   velocity: document.getElementById("velocity"),
   columnDensity: document.getElementById("columnDensity"),
+  tangentRadius: document.getElementById("tangentRadius"),
+  tangentVelocity: document.getElementById("tangentVelocity"),
+  tangentFrequency: document.getElementById("tangentFrequency"),
+  peakChannels: document.getElementById("peakChannels"),
 };
 
 let latestSpectrum = [];
@@ -67,6 +71,7 @@ function model() {
   const span = 360;
   const points = [];
   const components = galacticComponents(longitude, rotationSpeed, tauPeak);
+  const tangent = tangentPoint(longitude, rotationSpeed);
   let integral = 0;
   let lastV = null;
   let lastTb = null;
@@ -85,7 +90,20 @@ function model() {
     lastTb = tb;
   }
 
-  return { longitude, rotationSpeed, redshift, spinTemperature, tauPeak, sigmaVelocity, continuum, observedFreq, velocity, points, components, columnDensity: COLUMN_FACTOR * integral };
+  return { longitude, rotationSpeed, redshift, spinTemperature, tauPeak, sigmaVelocity, continuum, observedFreq, velocity, points, components, tangent, columnDensity: COLUMN_FACTOR * integral };
+}
+
+function tangentPoint(longitudeDeg, theta0) {
+  const l = longitudeDeg * Math.PI / 180;
+  const sinL = Math.sin(l);
+  const radius = Math.max(0, R0_KPC * Math.abs(sinL));
+  const velocity = longitudeDeg > 0 && longitudeDeg < 90 ? theta0 * (1 - Math.abs(sinL)) : null;
+  const frequency = velocity === null ? null : frequencyFromRadioVelocity(velocity);
+  return { radius, velocity, frequency };
+}
+
+function frequencyFromRadioVelocity(velocityKmS) {
+  return REST_FREQ_MHZ * (1 - velocityKmS / C_KM_S);
 }
 
 function galacticComponents(longitudeDeg, theta0, tauPeak) {
@@ -262,6 +280,49 @@ function plotFrequency(data) {
   ctx.font = "13px system-ui";
   ctx.fillText(`${REST_FREQ_MHZ.toFixed(4)} MHz rest`, x0, y - 24);
   ctx.fillText(`${data.observedFreq.toFixed(4)} MHz observed`, Math.min(xObs + 14, width - 190), y + 32);
+  data.components.forEach((component) => {
+    const f = frequencyFromRadioVelocity(component.velocity);
+    const localShift = REST_FREQ_MHZ - f;
+    const x = x0 + (localShift / maxShift) * (x1 - x0);
+    ctx.strokeStyle = "rgba(131,230,162,.5)";
+    ctx.beginPath();
+    ctx.moveTo(x, y - 44);
+    ctx.lineTo(x, y + 44);
+    ctx.stroke();
+  });
+}
+
+function plotRotationDiagnostic(data) {
+  const { ctx, width, height } = setup(document.getElementById("rotationCanvas"));
+  drawAxes(ctx, width, height, "v_tangent (km/s)", "R_tangent (kpc)");
+  const pad = { left: 52, right: 18, top: 22, bottom: 40 };
+  const points = [];
+  for (let l = 5; l <= 88; l += 1) {
+    const tp = tangentPoint(l, data.rotationSpeed);
+    points.push(tp);
+  }
+  const xMin = 0;
+  const xMax = R0_KPC;
+  const yMin = 0;
+  const yMax = data.rotationSpeed;
+  const px = (x) => pad.left + ((x - xMin) / (xMax - xMin)) * (width - pad.left - pad.right);
+  const py = (y) => height - pad.bottom - ((y - yMin) / (yMax - yMin)) * (height - pad.top - pad.bottom);
+  ctx.strokeStyle = "#66d9ef";
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  points.forEach((p, index) => {
+    const x = px(p.radius);
+    const y = py(p.velocity);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  if (data.tangent.velocity !== null) {
+    ctx.fillStyle = "#f4bf75";
+    ctx.beginPath();
+    ctx.arc(px(data.tangent.radius), py(data.tangent.velocity), 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function updateLabels(data) {
@@ -275,6 +336,10 @@ function updateLabels(data) {
   out.observedFrequency.textContent = `${data.observedFreq.toFixed(3)} MHz`;
   out.velocity.textContent = `${data.velocity.toFixed(1)} km/s`;
   out.columnDensity.textContent = data.columnDensity.toExponential(2).replace("e+", "e+");
+  out.tangentRadius.textContent = `${data.tangent.radius.toFixed(2)} kpc`;
+  out.tangentVelocity.textContent = data.tangent.velocity === null ? "not inner Galaxy" : `${data.tangent.velocity.toFixed(1)} km/s`;
+  out.tangentFrequency.textContent = data.tangent.frequency === null ? "n/a" : `${data.tangent.frequency.toFixed(3)} MHz`;
+  out.peakChannels.textContent = String(data.components.length);
 }
 
 function render() {
@@ -285,6 +350,7 @@ function render() {
   plotGalaxy(data);
   plotLongitudeVelocity(data);
   plotFrequency(data);
+  plotRotationDiagnostic(data);
 }
 
 function exportSpectrum() {

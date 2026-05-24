@@ -59,6 +59,8 @@ where `T_B` is in kelvin and `dv` is in km/s.
 - Milky Way top-down line-of-sight view.
 - Synthetic longitude-velocity diagram for Galactic H I structure.
 - Multi-component H I spectrum whose peaks shift with Galactic longitude.
+- Tangent-point diagnostic for inner-Galaxy rotation intuition.
+- Receiver-frequency markers for velocity-shifted H I components.
 - Gaussian optical-depth line profile.
 - Brightness temperature spectrum compared with optically thin approximation.
 - H I column density estimate from the synthetic line integral.
@@ -86,10 +88,19 @@ python tools/generate_21cm_spectrum.py
 python tools/validate_model.py
 ```
 
+The Python generator also writes:
+
+```text
+data/tangent_point_table.csv
+```
+
+which can be used for plotting a simple tangent-point rotation diagnostic outside the browser.
+
 ## Limitations
 
 - Uses a single Gaussian line component.
 - The Galactic rotation panel is a simplified educational model and not a fitted Milky Way rotation curve.
+- Tangent-point interpretation is only meaningful for idealised inner-Galaxy sightlines and assumes circular motion.
 - Does not model real telescope beams, calibration, receiver noise, baseline subtraction, self-absorption, multiple gas phases, or radiative transfer through complex Galactic structure.
 - Uses synthetic data only.
 - The radio velocity convention is appropriate for nearby sources; relativistic and optical conventions are not yet implemented.
