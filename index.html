@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Interactive hydrogen 21 cm line laboratory for neutral hydrogen spectroscopy, redshift, velocity, and column density.">
+    <title>Hydrogen 21 cm Line Lab</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Radio Astronomy and Neutral Hydrogen</p>
+          <h1>Hydrogen 21 cm Line Lab</h1>
+        </div>
+        <section class="metrics" aria-label="Line summary">
+          <div><span>Rest frequency</span><strong>1420.4058 MHz</strong></div>
+          <div><span>Observed frequency</span><strong id="observedFrequency">1420.41 MHz</strong></div>
+          <div><span>Velocity</span><strong id="velocity">0.0 km/s</strong></div>
+          <div><span>N_HI</span><strong id="columnDensity">0.00e+00 cm^-2</strong></div>
+        </section>
+      </header>
+
+      <section class="layout">
+        <aside class="panel controls">
+          <h2>Physical Parameters</h2>
+          <label>Redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label>
+          <label>Spin temperature <output id="spinOut">120 K</output><input id="spinTemperature" type="range" min="20" max="1000" value="120" step="5"></label>
+          <label>Peak optical depth <output id="tauOut">0.12</output><input id="tauPeak" type="range" min="0.001" max="1.5" value="0.12" step="0.001"></label>
+          <label>Line width sigma <output id="sigmaOut">9.0 km/s</output><input id="sigmaVelocity" type="range" min="1" max="45" value="9" step="0.5"></label>
+          <label>Continuum level <output id="continuumOut">2.73 K</output><input id="continuum" type="range" min="0" max="80" value="2.73" step="0.1"></label>
+          <button id="exportButton" type="button">Export synthetic spectrum</button>
+        </aside>
+
+        <section class="plots">
+          <article class="panel">
+            <div class="panel-title">
+              <h2>Brightness Temperature Spectrum</h2>
+              <span>optically thin and radiative-transfer view</span>
+            </div>
+            <canvas id="spectrumCanvas" width="980" height="360"></canvas>
+          </article>
+          <article class="panel">
+            <div class="panel-title">
+              <h2>Observed Frequency Shift</h2>
+              <span>rest frame to receiver band</span>
+            </div>
+            <canvas id="frequencyCanvas" width="980" height="280"></canvas>
+          </article>
+        </section>
+      </section>
+
+      <section class="panel equations">
+        <p><strong>Redshift</strong><span>nu_obs = nu_0 / (1 + z)</span></p>
+        <p><strong>Radio velocity</strong><span>v = c (nu_0 - nu_obs) / nu_0</span></p>
+        <p><strong>Brightness</strong><span>T_B = (T_s - T_c)(1 - exp(-tau))</span></p>
+        <p><strong>Column density</strong><span>N_HI = 1.823e18 integral T_B dv</span></p>
+      </section>
+    </main>
+    <footer class="site-footer">Biswajit@2026</footer>
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>
