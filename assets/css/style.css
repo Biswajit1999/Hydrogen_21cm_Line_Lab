@@ -8,6 +8,7 @@
   --cyan: #66d9ef;
   --green: #83e6a2;
   --gold: #f4bf75;
+  --magenta: #f17db2;
 }
 
 * { box-sizing: border-box; }
@@ -79,6 +80,15 @@ label {
 
 output { color: var(--gold); float: right; }
 input { width: 100%; accent-color: var(--green); }
+input[type="text"], input[type="file"] {
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 6px;
+  background: rgba(255,255,255,.035);
+  color: var(--text);
+  padding: .45rem .55rem;
+  font: inherit;
+}
+input[type="file"] { color: var(--muted); font-size: .74rem; }
 
 button {
   width: 100%;
@@ -91,6 +101,33 @@ button {
   font-weight: 800;
   cursor: pointer;
 }
+button.secondary {
+  margin-top: -.25rem;
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+.import-block {
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(102,217,239,.24);
+}
+.import-block h2 { color: var(--cyan); }
+.import-block p { margin: .5rem 0 .85rem; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.data-status {
+  margin-top: .75rem;
+  padding: .65rem .7rem;
+  border: 1px solid rgba(241,125,178,.34);
+  border-left: 3px solid var(--magenta);
+  border-radius: 6px;
+  background: rgba(241,125,178,.06);
+  color: var(--muted);
+  font-size: .74rem;
+  line-height: 1.45;
+}
+.data-status.loaded { border-left-color: var(--green); border-color: rgba(131,230,162,.32); background: rgba(131,230,162,.06); }
+.data-status.error { border-left-color: var(--gold); border-color: rgba(244,191,117,.34); background: rgba(244,191,117,.06); }
 
 .plots {
   display: grid;
