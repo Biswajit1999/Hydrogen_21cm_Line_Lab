@@ -1,109 +1,91 @@
 # Hydrogen 21 cm Line Lab
 
-Interactive radio astronomy laboratory for the neutral hydrogen 21 cm hyperfine line, redshifted observing frequency, Doppler velocity, Galactic rotation signatures, longitude-velocity structure, line broadening, optical depth, brightness temperature, and H I column density.
+Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, and H I column-density approximations.
 
 **Author:** Biswajit Jana
 
 ## Research Motivation
 
-The 21 cm line of neutral hydrogen is one of the most important diagnostics in radio astronomy. It maps Galactic H I structure, galaxy rotation curves, neutral gas reservoirs, high-velocity clouds, and the large-scale distribution of matter. This project provides a compact, browser-based research explainer for the spectroscopy behind the line.
+The H I 21 cm line is a major diagnostic of neutral gas in the Milky Way and external galaxies. This project is a browser-based scientific explainer: it separates the frequency-redshift relation from local velocity conventions, then uses a deliberately synthetic Galactic model to explore spectra, longitude-velocity structure, and optical-depth effects.
 
-## Scientific Background
+## Scientific Model
 
-The rest-frame transition frequency is:
+The rest frequency is
 
 ```text
 nu_0 = 1420.40575177 MHz
 ```
 
-corresponding to a wavelength of approximately 21.106 cm. The transition is produced by the hyperfine spin-flip of the ground-state hydrogen atom.
-
-For a cosmological redshift:
+For a cosmological redshift,
 
 ```text
 nu_obs = nu_0 / (1 + z)
 ```
 
-For the radio Doppler convention:
+The browser reports three coordinate conventions for the same redshift:
 
 ```text
-v = c (nu_0 - nu_obs) / nu_0
+v_radio        = c z / (1 + z)
+v_optical      = c z
+v_relativistic = c [((1 + z)^2 - 1) / ((1 + z)^2 + 1)]
 ```
 
-For a simplified axisymmetric Milky Way rotation model, the line-of-sight velocity is:
+These are alternative ways to label a spectrum. A cosmological redshift is not automatically a local peculiar velocity.
 
-```text
-v_los = [Theta(R) R0/R - Theta0] sin(l)
-```
-
-The browser uses this relationship as the physical motivation for synthetic longitude-dependent H I velocity components. The visual model is intentionally simplified so that the line shift can be explored interactively without requiring a full Galactic mass model.
-
-The brightness temperature for a simple slab against a continuum background is modelled as:
+The synthetic slab uses
 
 ```text
 T_B(v) = (T_s - T_c) [1 - exp(-tau(v))]
 ```
 
-For optically thin emission, the H I column density is approximated by:
+and compares two model-dependent column-density quantities:
 
 ```text
-N_HI = 1.823e18 integral T_B(v) dv   cm^-2
+N_HI thin = 1.823e18 integral T_B(v) dv
+N_HI slab = 1.823e18 T_s integral tau(v) dv
 ```
 
-where `T_B` is in kelvin and `dv` is in km/s.
+The first is the optically thin approximation. The second is exact only within the project's uniform-slab spin-temperature and optical-depth assumptions.
 
-## Main Features
+A simplified axisymmetric rotation relation motivates the synthetic longitude-dependent components:
 
-- Interactive redshift and observed-frequency readout.
-- Radio Doppler velocity estimate.
-- Milky Way top-down line-of-sight view.
-- Synthetic longitude-velocity diagram for Galactic H I structure.
-- Multi-component H I spectrum whose peaks shift with Galactic longitude.
-- Tangent-point diagnostic for inner-Galaxy rotation intuition.
-- Receiver-frequency markers for velocity-shifted H I components.
-- Gaussian optical-depth line profile.
-- Brightness temperature spectrum compared with optically thin approximation.
-- H I column density estimate from the synthetic line integral.
-- CSV export of synthetic spectrum.
-- Python generator and validation scripts.
-- GitHub Pages-ready static implementation.
+```text
+v_los = [Theta(R) R0/R - Theta0] sin(l)
+```
 
-## Research Use Cases
+## Features
 
-- Teaching how rest frequency, redshift, and radio velocity are connected.
-- Demonstrating why 21 cm surveys produce longitude-velocity maps rather than a single universal line centre.
-- Exploring how Galactic rotation shifts H I components along different lines of sight.
-- Building intuition for optically thin H I column-density estimates.
-- Creating synthetic 21 cm spectra for plotting and dashboard workflows.
-- Serving as a foundation for future H I rotation-curve and Galactic longitude-velocity visualisations.
+- Exact redshifted frequency readout from `nu_obs = nu_0 / (1 + z)`.
+- Radio, optical, and relativistic spectral-coordinate comparison.
+- Synthetic multi-component H I spectrum with radiative-transfer and optically-thin curves.
+- Uniform-slab and optically-thin N_HI comparison with a visible correction factor.
+- Milky Way top-down line-of-sight view and synthetic longitude-velocity ridge.
+- Tangent-point diagnostic for idealised inner-Galaxy circular motion.
+- CSV export of the synthetic spectrum.
+- Matching Python generator and validation scripts.
 
 ## Running Locally
 
-Open `index.html` in a browser.
+Open `index.html` in a modern browser.
 
-Optional Python generation and validation:
+For the synthetic tables and checks:
 
 ```bash
 python tools/generate_21cm_spectrum.py
 python tools/validate_model.py
 ```
 
-The Python generator also writes:
-
-```text
-data/tangent_point_table.csv
-```
-
-which can be used for plotting a simple tangent-point rotation diagnostic outside the browser.
+The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_table.csv`.
 
 ## Limitations
 
-- Uses a single Gaussian line component.
-- The Galactic rotation panel is a simplified educational model and not a fitted Milky Way rotation curve.
-- Tangent-point interpretation is only meaningful for idealised inner-Galaxy sightlines and assumes circular motion.
-- Does not model real telescope beams, calibration, receiver noise, baseline subtraction, self-absorption, multiple gas phases, or radiative transfer through complex Galactic structure.
-- Uses synthetic data only.
-- The radio velocity convention is appropriate for nearby sources; relativistic and optical conventions are not yet implemented.
+This is a pedagogical synthetic model, not a survey-analysis pipeline.
+
+- Galactic components are illustrative Gaussian optical-depth profiles, not observed H I spectra or a fitted rotation curve.
+- The slab estimate assumes a uniform spin temperature and does not handle self-absorption, multiple phases, beam filling, or line-of-sight temperature structure.
+- The tangent-point construction is meaningful only for idealised inner-Galaxy circular sightlines.
+- It does not model telescope beams, calibration, receiver noise, baseline subtraction, bandwidth response, or instrumental selection effects.
+- Spectral conventions are shown for clarity; their labels do not turn cosmological redshift into a local velocity measurement.
 
 ## Research References
 
@@ -112,10 +94,6 @@ which can be used for plotting a simple tangent-point rotation diagnostic outsid
 - Rohlfs & Wilson, *Tools of Radio Astronomy*.
 - Draine, *Physics of the Interstellar and Intergalactic Medium*.
 - Furlanetto, Oh & Briggs, 2006, 21 cm cosmology review.
-
-## README Image Prompt
-
-A README hero image prompt is provided in [`docs/image_prompt.md`](docs/image_prompt.md).
 
 ## Suggested GitHub Topics
 
