@@ -1,6 +1,6 @@
 # Hydrogen 21 cm Line Lab
 
-Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, and H I column-density approximations.
+Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, column-density approximations, and explicitly labelled spectrum overlays.
 
 **Author:** Biswajit Jana
 
@@ -53,12 +53,28 @@ A simplified axisymmetric rotation relation motivates the synthetic longitude-de
 v_los = [Theta(R) R0/R - Theta0] sin(l)
 ```
 
+## Observed-spectrum overlay
+
+The default laboratory output is synthetic. The optional CSV overlay lets you compare a user-supplied brightness-temperature spectrum against the synthetic model while preserving a visible provenance status on the page.
+
+For an imported emission spectrum, the browser calculates only
+
+```text
+N_HI thin = 1.823e18 integral T_B(v) dv
+```
+
+It does **not** infer optical depth, spin temperature, a slab correction, self-absorption, or a best-fitting Galactic model from those data. The overlay never alters the synthetic spectrum or its controls.
+
+See [`docs/observed-spectrum-import.md`](docs/observed-spectrum-import.md) for supported column names, CSV format, provenance notes, and interpretation limits.
+
 ## Features
 
 - Exact redshifted frequency readout from `nu_obs = nu_0 / (1 + z)`.
 - Radio, optical, and relativistic spectral-coordinate comparison.
 - Synthetic multi-component H I spectrum with radiative-transfer and optically-thin curves.
 - Uniform-slab and optically-thin N_HI comparison with a visible correction factor.
+- Provenance-aware CSV overlay for imported velocity/brightness-temperature spectra.
+- Optically-thin N_HI integration for imported emission spectra, visibly separate from the synthetic slab estimate.
 - Milky Way top-down line-of-sight view and synthetic longitude-velocity ridge.
 - Tangent-point diagnostic for idealised inner-Galaxy circular motion.
 - CSV export of the synthetic spectrum.
@@ -79,9 +95,10 @@ The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_
 
 ## Limitations
 
-This is a pedagogical synthetic model, not a survey-analysis pipeline.
+This is a pedagogical synthetic model with an optional visual data overlay, not a survey-analysis pipeline.
 
 - Galactic components are illustrative Gaussian optical-depth profiles, not observed H I spectra or a fitted rotation curve.
+- Imported data are displayed without baseline fitting, calibration checks, velocity-frame conversion, beam correction, resampling, uncertainty propagation, or parameter fitting.
 - The slab estimate assumes a uniform spin temperature and does not handle self-absorption, multiple phases, beam filling, or line-of-sight temperature structure.
 - The tangent-point construction is meaningful only for idealised inner-Galaxy circular sightlines.
 - It does not model telescope beams, calibration, receiver noise, baseline subtraction, bandwidth response, or instrumental selection effects.
@@ -91,6 +108,7 @@ This is a pedagogical synthetic model, not a survey-analysis pipeline.
 
 - Ewen & Purcell, 1951, first detection of the 21 cm hydrogen line.
 - Field, 1958, spin temperature and the 21 cm line.
+- HI4PI Collaboration et al., 2016, *HI4PI: A full-sky H I survey based on EBHIS and GASS*.
 - Rohlfs & Wilson, *Tools of Radio Astronomy*.
 - Draine, *Physics of the Interstellar and Intergalactic Medium*.
 - Furlanetto, Oh & Briggs, 2006, 21 cm cosmology review.
