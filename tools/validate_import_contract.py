@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from io import StringIO
 
 COLUMN_FACTOR = 1.823e18
@@ -10,7 +11,11 @@ TEMPERATURE_COLUMNS = {"brightness_temperature_k", "brightness_temperature", "tb
 
 
 def normalise(header: str) -> str:
-    return header.strip().lower().replace(" ", "_")
+    value = header.strip().lower().lstrip("\ufeff")
+    value = re.sub(r"[\s()\[\]{}]", "_", value)
+    value = re.sub(r"[^a-z0-9_]", "", value)
+    value = re.sub(r"_+", "_", value)
+    return value.strip("_")
 
 
 def parse_csv(text: str) -> list[tuple[float, float]]:
@@ -35,15 +40,17 @@ def thin_column(points: list[tuple[float, float]]) -> float:
 
 def main() -> None:
     points = parse_csv("velocity_km_s,brightness_temperature_K\n0,1\n1,1\n2,1\n")
+    unit_bearing_points = parse_csv("v_LSR [km/s],Tb (K)\n0,1\n1,1\n2,1\n")
     column = thin_column(points)
     assert column == 2 * COLUMN_FACTOR
+    assert unit_bearing_points == points
     try:
         parse_csv("velocity_km_s,flux\n0,1\n1,1\n2,1\n")
     except ValueError:
         pass
     else:
         raise AssertionError("missing temperature column should be rejected")
-    print(f"PASS CSV import contract: {len(points)} rows, N_HI thin = {column:.3e} cm^-2")
+    print(f"PASS CSV import contract: {len(points)} rows, unit-bearing aliases accepted, N_HI thin = {column:.3e} cm^-2")
 
 
 if __name__ == "__main__":
