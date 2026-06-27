@@ -13,7 +13,7 @@ TEMPERATURE_COLUMNS = {"brightness_temperature_k", "brightness_temperature", "tb
 def normalise(header: str) -> str:
     value = header.strip().lower().lstrip("\ufeff")
     value = re.sub(r"[\s()\[\]{}]", "_", value)
-    value = re.sub(r"[^a-z0-9_]", "", value)
+    value = re.sub(r"[^a-z0-9_]+", "_", value)
     value = re.sub(r"_+", "_", value)
     return value.strip("_")
 
