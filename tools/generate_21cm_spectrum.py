@@ -10,11 +10,18 @@ REST_FREQ_MHZ = 1420.40575177
 C_KM_S = 299792.458
 COLUMN_FACTOR = 1.823e18
 R0_KPC = 8.2
+SPECTRUM_SAMPLES = 520
+VELOCITY_SPAN_KM_S = 360.0
 
 
 def observed_frequency(redshift: float) -> float:
     """Cosmological frequency relation, not a local velocity conversion."""
     return REST_FREQ_MHZ / (1.0 + redshift)
+
+
+def radio_frequency_from_velocity(velocity_km_s: float) -> float:
+    """Radio spectral-coordinate frequency for a local line-of-sight velocity label."""
+    return REST_FREQ_MHZ * (1.0 - velocity_km_s / C_KM_S)
 
 
 def velocity_conventions(redshift: float) -> dict[str, float]:
@@ -45,7 +52,7 @@ def tangent_point(longitude_deg: float, theta0: float) -> dict[str, float | None
     radius = R0_KPC * abs(math.sin(longitude))
     if 0.0 < longitude_deg < 90.0:
         velocity = theta0 * (1.0 - abs(math.sin(longitude)))
-        frequency = REST_FREQ_MHZ * (1.0 - velocity / C_KM_S)
+        frequency = radio_frequency_from_velocity(velocity)
     else:
         velocity = None
         frequency = None
@@ -73,15 +80,14 @@ def generate_spectrum(
     sigma_velocity: float = 9.0,
     longitude_deg: float = 35.0,
     theta0: float = 220.0,
-    samples: int = 420,
+    samples: int = SPECTRUM_SAMPLES,
 ) -> tuple[list[dict[str, float]], float]:
     """Return synthetic spectrum rows and the optically-thin NHI estimate."""
-    span = 360.0
     components = galactic_components(longitude_deg, theta0, tau_peak)
     rows: list[dict[str, float]] = []
 
     for index in range(samples):
-        velocity = -span / 2.0 + span * index / (samples - 1)
+        velocity = -VELOCITY_SPAN_KM_S / 2.0 + VELOCITY_SPAN_KM_S * index / (samples - 1)
         tau = 0.0
         for component in components:
             sigma = sigma_velocity * component["width_scale"]
