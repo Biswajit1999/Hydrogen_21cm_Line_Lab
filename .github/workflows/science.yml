@@ -1,0 +1,21 @@
+name: Science validation
+
+on:
+  pull_request:
+  push:
+    branches: [main, science-validation-contract-v1]
+
+jobs:
+  science:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate synthetic spectrum
+        run: python tools/generate_21cm_spectrum.py
+      - name: Validate existing model checks
+        run: python tools/validate_model.py
+      - name: Validate independent science contract
+        run: python tools/validate_science_contract.py
