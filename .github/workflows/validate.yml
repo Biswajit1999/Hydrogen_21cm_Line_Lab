@@ -2,7 +2,7 @@ name: Validate 21 cm laboratory
 
 on:
   push:
-    branches: [upgrade-v2]
+    branches: [upgrade-v2, velocity-conventions-validation-v1]
   pull_request:
 
 permissions:
@@ -30,5 +30,7 @@ jobs:
         run: python tools/generate_21cm_spectrum.py
       - name: Validate physical model checks
         run: python tools/validate_model.py
+      - name: Validate spectral velocity conventions
+        run: python tools/validate_velocity_conventions.py
       - name: Validate observed-spectrum CSV contract
         run: python tools/validate_import_contract.py
