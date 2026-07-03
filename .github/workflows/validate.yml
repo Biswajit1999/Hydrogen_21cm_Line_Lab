@@ -1,0 +1,34 @@
+name: Validate 21 cm laboratory
+
+on:
+  push:
+    branches: [upgrade-v2]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  model-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Parse browser spectrum overlay sources
+        run: |
+          node --check assets/js/app.js
+          node --check assets/js/import-normalisation.js
+          node --check tools/validate_browser_contract.js
+      - name: Validate browser physics contract
+        run: node tools/validate_browser_contract.js
+      - name: Generate deterministic synthetic tables
+        run: python tools/generate_21cm_spectrum.py
+      - name: Validate physical model checks
+        run: python tools/validate_model.py
+      - name: Validate observed-spectrum CSV contract
+        run: python tools/validate_import_contract.py

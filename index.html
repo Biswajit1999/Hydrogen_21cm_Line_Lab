@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Interactive hydrogen 21 cm line laboratory for neutral hydrogen spectroscopy, redshift, velocity, and column density.">
+    <meta name="description" content="Interactive hydrogen 21 cm line laboratory for neutral hydrogen spectroscopy, redshift conventions, velocity coordinates, synthetic radiative transfer, and provenance-aware spectrum comparison.">
     <title>Hydrogen 21 cm Line Lab</title>
     <link rel="stylesheet" href="assets/css/style.css">
   </head>
@@ -17,8 +17,8 @@
         <section class="metrics" aria-label="Line summary">
           <div><span>Rest frequency</span><strong>1420.4058 MHz</strong></div>
           <div><span>Observed frequency</span><strong id="observedFrequency">1420.41 MHz</strong></div>
-          <div><span>Velocity</span><strong id="velocity">0.0 km/s</strong></div>
-          <div><span>N_HI</span><strong id="columnDensity">0.00e+00 cm^-2</strong></div>
+          <div><span>Radio velocity</span><strong id="velocity">0.0 km/s</strong></div>
+          <div><span>Uniform-slab N_HI</span><strong id="columnDensity">0.00e+00 cm^-2</strong></div>
         </section>
       </header>
 
@@ -27,12 +27,25 @@
           <h2>Physical Parameters</h2>
           <label>Galactic longitude <output id="longitudeOut">35 deg</output><input id="longitude" type="range" min="0" max="180" value="35" step="1"></label>
           <label>Flat rotation speed <output id="rotationOut">220 km/s</output><input id="rotationSpeed" type="range" min="160" max="260" value="220" step="1"></label>
-          <label>Redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label>
+          <label>Cosmological redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label>
           <label>Spin temperature <output id="spinOut">120 K</output><input id="spinTemperature" type="range" min="20" max="1000" value="120" step="5"></label>
           <label>Peak optical depth <output id="tauOut">0.12</output><input id="tauPeak" type="range" min="0.001" max="1.5" value="0.12" step="0.001"></label>
           <label>Line width sigma <output id="sigmaOut">9.0 km/s</output><input id="sigmaVelocity" type="range" min="1" max="45" value="9" step="0.5"></label>
           <label>Continuum level <output id="continuumOut">2.73 K</output><input id="continuum" type="range" min="0" max="80" value="2.73" step="0.1"></label>
           <button id="exportButton" type="button">Export synthetic spectrum</button>
+
+          <section class="import-block" aria-labelledby="importTitle">
+            <h2 id="importTitle">Observed spectrum overlay</h2>
+            <p>Load a CSV with velocity and brightness-temperature columns. The model stays synthetic; imported data are labelled and never used to infer optical depth.</p>
+            <label>Dataset or survey citation
+              <input id="sourceLabel" type="text" placeholder="e.g. HI4PI, line of sight..., processed...">
+            </label>
+            <label>CSV spectrum
+              <input id="observedFile" type="file" accept=".csv,text/csv">
+            </label>
+            <button id="clearObservedButton" class="secondary" type="button">Clear observed overlay</button>
+            <div id="dataStatus" class="data-status" aria-live="polite">Synthetic model only. No observed spectrum is loaded.</div>
+          </section>
         </aside>
 
         <section class="plots">
@@ -56,8 +69,8 @@
           </article>
           <article class="panel">
             <div class="panel-title">
-              <h2>Milky Way H I Spectrum</h2>
-              <span>line-of-sight velocity components</span>
+              <h2>Synthetic H I Model with Optional Observed Overlay</h2>
+              <span>synthetic radiative transfer; imported data retain their own provenance</span>
             </div>
             <canvas id="spectrumCanvas" width="980" height="360"></canvas>
           </article>
@@ -77,8 +90,8 @@
           </article>
           <article class="panel">
             <div class="panel-title">
-              <h2>Observed Frequency Shift</h2>
-              <span>receiver band with Galactic velocity markers</span>
+              <h2>Observed Frequency and Velocity Conventions</h2>
+              <span>radio, optical, and relativistic coordinates for the same redshift</span>
             </div>
             <canvas id="frequencyCanvas" width="980" height="280"></canvas>
           </article>
@@ -94,13 +107,15 @@
 
       <section class="panel equations">
         <p><strong>Redshift</strong><span>nu_obs = nu_0 / (1 + z)</span></p>
-        <p><strong>Radio velocity</strong><span>v = c (nu_0 - nu_obs) / nu_0</span></p>
+        <p><strong>Radio velocity</strong><span>v_radio = c z / (1 + z)</span></p>
         <p><strong>Brightness</strong><span>T_B = (T_s - T_c)(1 - exp(-tau))</span></p>
-        <p><strong>Column density</strong><span>N_HI = 1.823e18 integral T_B dv</span></p>
+        <p><strong>Thin column</strong><span>N_HI thin = 1.823e18 integral T_B dv</span></p>
+        <p><strong>Slab column</strong><span>N_HI slab = 1.823e18 T_s integral tau dv</span></p>
         <p><strong>Galactic velocity</strong><span>v_los = [Theta(R) R0/R - Theta0] sin(l)</span></p>
       </section>
     </main>
-    <footer class="site-footer">Biswajit@2026</footer>
+    <footer class="site-footer">Hydrogen 21 cm Line Lab · Biswajit Jana · 2026</footer>
     <script src="assets/js/app.js"></script>
+    <script src="assets/js/import-normalisation.js"></script>
   </body>
 </html>
