@@ -64,7 +64,7 @@ spectrum channels  = 520
 N_HI thin factor   = 1.823e18 cm^-2 per K km/s
 ```
 
-`tools/validate_model.py` checks the physical equations, velocity convention ordering, tangent-point behaviour, optical-depth limits, velocity span, and channel count. `tools/validate_browser_contract.js` statically guards the browser implementation against drifting away from the Python reference constants and equations.
+`tools/validate_model.py` checks the physical equations, velocity convention ordering, tangent-point behaviour, optical-depth limits, velocity span, and channel count. `tools/validate_velocity_conventions.py` independently checks that radio, optical, and relativistic spectral-coordinate labels agree at very low redshift, diverge at high redshift, and remain inverse-consistent with the rest-frequency relation where applicable. `tools/validate_browser_contract.js` statically guards the browser implementation against drifting away from the Python reference constants and equations.
 
 ## Observed-spectrum overlay
 
@@ -91,7 +91,7 @@ See [`docs/observed-spectrum-import.md`](docs/observed-spectrum-import.md) for s
 - Milky Way top-down line-of-sight view and synthetic longitude-velocity ridge.
 - Tangent-point diagnostic for idealised inner-Galaxy circular motion.
 - CSV export of the synthetic spectrum.
-- Matching Python generator and browser-contract validation scripts.
+- Matching Python generator, velocity-convention guard, and browser-contract validation scripts.
 
 ## Running Locally
 
@@ -102,6 +102,7 @@ For the synthetic tables and checks:
 ```bash
 python tools/generate_21cm_spectrum.py
 python tools/validate_model.py
+python tools/validate_velocity_conventions.py
 node tools/validate_browser_contract.js
 python tools/validate_import_contract.py
 ```
