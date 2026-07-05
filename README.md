@@ -122,7 +122,3 @@ This remains a pedagogical synthetic model with a provenance-aware import layer,
 - Rohlfs & Wilson, *Tools of Radio Astronomy*.
 - Draine, *Physics of the Interstellar and Intergalactic Medium*.
 - NASA/IAU FITS Standard, primary HDU and WCS conventions.
-
-## Suggested GitHub Topics
-
-`radio-astronomy`, `hydrogen-line`, `21cm`, `neutral-hydrogen`, `spectroscopy`, `astrophysics`, `scientific-visualisation`, `javascript`, `python`, `github-pages`, `fits`
