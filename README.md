@@ -30,6 +30,8 @@ v_los = [Theta(R) R0/R - Theta0] sin(l)
 
 The velocity expressions are alternative spectral-coordinate labels. A cosmological redshift is not automatically a local peculiar velocity. The uniform-slab column estimate is exact only inside the stated spin-temperature and optical-depth assumptions.
 
+For the explicit physical-truth checklist used by the validation suite, see [`docs/science_validation_contract.md`](docs/science_validation_contract.md).
+
 ## Interactive Dashboard
 
 - Responsive dark research-cockpit layout with a parameter rail, metrics, diagnostics, and navigation.
@@ -89,12 +91,13 @@ python tools/generate_21cm_spectrum.py
 python tools/validate_model.py
 python tools/validate_velocity_conventions.py
 python tools/validate_import_contract.py
+python tools/validate_science_contract.py
 node tools/validate_browser_contract.js
 node tools/validate_dashboard_contract.js
 node tools/validate_fits_import.js
 ```
 
-The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_table.csv`.
+The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_table.csv`. The science-contract validation writes `data/science_contract_summary.csv`.
 
 ## Running Locally
 

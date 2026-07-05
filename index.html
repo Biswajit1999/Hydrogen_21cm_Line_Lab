@@ -25,21 +25,31 @@
 
     <main class="workspace">
       <header class="command-bar">
-        <div><p class="eyebrow">Radio astronomy · neutral hydrogen</p><h1>Hydrogen 21 cm Line Lab</h1><p class="subtitle">A provenance-aware laboratory for synthetic H I radiative transfer, spectral coordinates, and user-provided spectrum overlays.</p></div>
-        <div class="command-state"><span class="provenance-pill" id="provenancePill">Synthetic model active</span><span class="author-badge">Biswajit Jana · 2026</span></div>
+        <div><p class="eyebrow">Radio astronomy · neutral hydrogen</p><h1>Hydrogen 21 cm Line Lab</h1><p class="subtitle">Mapping neutral hydrogen through a documented synthetic H I model, explicit velocity conventions, and provenance-aware spectrum import.</p></div>
+        <div class="command-state"><span class="provenance-pill" id="provenancePill">Synthetic model active</span><span class="author-badge">Biswajit Jana · Researcher</span></div>
       </header>
 
       <section class="metric-strip" aria-label="Current model summary">
         <article class="metric-card"><span>Rest frequency</span><strong>1420.4058 MHz</strong><small>H I hyperfine line</small></article>
         <article class="metric-card"><span>Observed frequency</span><strong id="observedFrequency">1420.41 MHz</strong><small>from selected redshift</small></article>
-        <article class="metric-card"><span>Radio coordinate</span><strong id="velocity">0.0 km/s</strong><small>not a universal speed</small></article>
+        <article class="metric-card"><span>Radio coordinate</span><strong id="velocity">0.0 km/s</strong><small>coordinate convention</small></article>
         <article class="metric-card"><span>Uniform-slab N<sub>HI</sub></span><strong id="columnDensity">0.00e+00 cm<sup>-2</sup></strong><small>synthetic slab estimate</small></article>
       </section>
 
       <section id="dashboard" class="dashboard-grid">
         <section class="left-rail">
+          <article class="panel model-stream-panel">
+            <div class="panel-heading"><div><p class="section-kicker">Model layers</p><h2>Synthetic H I components</h2></div><span class="panel-tag safe">3 active</span></div>
+            <ul class="model-layer-list">
+              <li><span class="layer-dot cyan"></span><div><strong>Local gas</strong><small>Gaussian optical-depth component</small></div><b>linked</b></li>
+              <li><span class="layer-dot violet"></span><div><strong>Inner / tangent gas</strong><small>Longitude-dependent velocity ridge</small></div><b>linked</b></li>
+              <li><span class="layer-dot magenta"></span><div><strong>Outer-arm term</strong><small>Broad synthetic contribution</small></div><b>linked</b></li>
+            </ul>
+            <p>All three layers are model terms, not catalogue detections.</p>
+          </article>
+
           <article class="panel controls-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Parameters</p><h2>Physical model</h2></div><span class="panel-tag">editable</span></div>
+            <div class="panel-heading"><div><p class="section-kicker">Physical controls</p><h2>Model parameters</h2></div><span class="panel-tag">editable</span></div>
             <label>Galactic longitude <output id="longitudeOut">35 deg</output><input id="longitude" type="range" min="0" max="180" value="35" step="1"></label>
             <label>Flat rotation speed <output id="rotationOut">220 km/s</output><input id="rotationSpeed" type="range" min="160" max="260" value="220" step="1"></label>
             <label>Cosmological redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label>
@@ -63,11 +73,12 @@
         <section class="centre-column">
           <article id="phase-space-panel" class="panel field-panel">
             <div class="panel-heading"><div><p class="section-kicker">Model phase space</p><h2>Synthetic H I longitude–velocity intensity map</h2></div><div class="view-controls" role="group" aria-label="Phase-space display mode"><button id="mapViewButton" class="icon-button is-active" type="button" aria-pressed="true">Intensity map</button><button id="surfaceViewButton" class="icon-button" type="button" aria-pressed="false">3D surface</button><button id="resetViewButton" class="icon-button" type="button">Reset surface</button></div></div>
+            <div class="panel-heading"><div><p class="section-kicker">H I phase-space console</p><h2>Synthetic longitude–velocity intensity map</h2></div><div class="view-controls" role="group" aria-label="Phase-space display mode"><button id="mapViewButton" class="icon-button is-active" type="button" aria-pressed="true">Intensity map</button><button id="surfaceViewButton" class="icon-button" type="button" aria-pressed="false">3D surface</button><button id="resetViewButton" class="icon-button" type="button">Reset surface</button></div></div>
             <canvas id="phaseSpaceCanvas" width="1080" height="640" aria-label="Synthetic H I longitude velocity intensity map with optional 3D surface view"></canvas>
             <div class="field-caption"><span><i class="legend-chip intensity"></i> Relative synthetic brightness temperature, T<sub>B</sub>(l, v)</span><span><i class="legend-chip axis"></i> Axes: Galactic longitude and radio velocity</span><span id="fieldStatus">Map mode · selected longitude is shown in gold · surface mode encodes the same model as height</span></div>
           </article>
           <article id="spectrum-panel" class="panel spectrum-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Spectrum laboratory</p><h2>Synthetic H I profile with optional imported overlay</h2></div><span id="spectrumMode" class="panel-tag">synthetic only</span></div>
+            <div class="panel-heading"><div><p class="section-kicker">Spectrum overlay</p><h2>Model profile and imported spectrum</h2></div><span id="spectrumMode" class="panel-tag">synthetic only</span></div>
             <canvas id="spectrumCanvas" width="1080" height="390"></canvas>
             <div class="plot-key"><span><i class="key-line cyan"></i> Synthetic slab brightness</span><span><i class="key-line gold"></i> Optically thin branch</span><span><i class="key-line magenta"></i> Imported overlay (if loaded)</span></div>
           </article>
@@ -75,8 +86,8 @@
 
         <section class="right-rail">
           <article class="panel coordinate-panel"><div class="panel-heading"><div><p class="section-kicker">Spectral coordinate</p><h2>Frequency and velocity conventions</h2></div><span class="panel-tag">z coordinate</span></div><canvas id="frequencyCanvas" width="470" height="320"></canvas><p class="panel-copy">Radio, optical, and relativistic velocity labels are shown for one redshift. They are not interchangeable physical velocities.</p></article>
-          <article class="panel diagnostics-card"><div class="panel-heading"><div><p class="section-kicker">Derived diagnostics</p><h2>Current model state</h2></div></div><div class="compact-metrics"><div><span>Tangent radius</span><strong id="tangentRadius">0.00 kpc</strong></div><div><span>Tangent velocity</span><strong id="tangentVelocity">0.0 km/s</strong></div><div><span>Tangent frequency</span><strong id="tangentFrequency">1420.405 MHz</strong></div><div><span>Synthetic components</span><strong id="peakChannels">0</strong></div></div></article>
-          <article class="panel provenance-card"><div class="panel-heading"><div><p class="section-kicker">Provenance guard</p><h2>Data interpretation</h2></div></div><dl class="provenance-list"><div><dt>Field mode</dt><dd id="dataMode">Synthetic l-v-T<sub>B</sub> field</dd></div><div><dt>Imported data</dt><dd id="importedMode">No user spectrum loaded</dd></div><div><dt>Column estimate</dt><dd>Imported spectra use the optically-thin emission conversion only.</dd></div></dl></article>
+          <article class="panel diagnostics-card"><div class="panel-heading"><div><p class="section-kicker">Key diagnostics</p><h2>Current model state</h2></div></div><div class="compact-metrics"><div><span>Tangent radius</span><strong id="tangentRadius">0.00 kpc</strong></div><div><span>Tangent velocity</span><strong id="tangentVelocity">0.0 km/s</strong></div><div><span>Tangent frequency</span><strong id="tangentFrequency">1420.405 MHz</strong></div><div><span>Synthetic components</span><strong id="peakChannels">0</strong></div></div></article>
+          <article class="panel provenance-card"><div class="panel-heading"><div><p class="section-kicker">Data interpretation</p><h2>Provenance guard</h2></div></div><dl class="provenance-list"><div><dt>Field mode</dt><dd id="dataMode">Synthetic l-v-T<sub>B</sub> field</dd></div><div><dt>Imported data</dt><dd id="importedMode">No user spectrum loaded</dd></div><div><dt>Column estimate</dt><dd>Imported spectra use the optically-thin emission conversion only.</dd></div></dl></article>
         </section>
       </section>
 
