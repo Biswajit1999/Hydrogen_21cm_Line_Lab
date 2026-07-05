@@ -79,7 +79,6 @@
     const glow = ctx.createRadialGradient(width * .5, height * .48, 0, width * .5, height * .48, Math.max(width, height) * .66);
     glow.addColorStop(0, "rgba(24,72,106,.18)"); glow.addColorStop(1, "rgba(4,8,14,0)"); ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
     drawAxes(ctx, width, height);
-
     const points = [], brightnessScale = Math.max(1, ts - tc);
     for (let ix = 0; ix < 86; ix += 1) {
       const l = 180 * ix / 85, parts = components(l, theta0, tauPeak);
@@ -94,7 +93,6 @@
       ctx.fillStyle = fieldColor(point.intensity, .12 + .7 * point.intensity);
       ctx.beginPath(); ctx.arc(point.x, point.y, Math.max(.7, 1 + point.intensity * 2.45) * point.scale, 0, Math.PI * 2); ctx.fill();
     });
-
     const selected = components(longitude, theta0, tauPeak), path = [];
     for (let i = 0; i < 70; i += 1) {
       const v = -180 + 360 * i / 69, intensity = Math.max(0, Math.min(1, brightness(selected, v, ts, tc, sigma) / brightnessScale));
@@ -118,9 +116,8 @@
   canvas.addEventListener("wheel", (event) => { event.preventDefault(); state.zoom = Math.max(.64, Math.min(1.9, state.zoom * (event.deltaY > 0 ? .91 : 1.1))); draw(); }, { passive: false });
   autoButton.addEventListener("click", () => setRotate(!state.rotating));
   resetButton.addEventListener("click", () => { state.yaw = -.58; state.pitch = .34; state.zoom = 1; draw(); });
-  ["longitude","rotationSpeed","redshift","spinTemperature","tauPeak","sigmaVelocity","continuum"].forEach((id) => document.getElementById(id).addEventListener("input", draw));
-  document.getElementById("observedFile").addEventListener("change", () => window.setTimeout(draw, 20));
-  document.getElementById("clearObservedButton").addEventListener("click", () => window.setTimeout(draw, 0));
+  ["longitude", "rotationSpeed", "redshift", "spinTemperature", "tauPeak", "sigmaVelocity", "continuum"].forEach((id) => document.getElementById(id).addEventListener("input", draw));
+  window.addEventListener("hi21:import-change", draw);
   window.addEventListener("resize", draw);
   draw();
 })();

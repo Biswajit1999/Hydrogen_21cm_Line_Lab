@@ -1,6 +1,6 @@
 # Hydrogen 21 cm Line Lab
 
-Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, column-density approximations, and explicitly labelled spectrum overlays.
+Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, column-density approximations, and provenance-aware user spectrum import.
 
 **Author:** Biswajit Jana
 
@@ -8,54 +8,72 @@ Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine 
 
 The H I 21 cm line is a major diagnostic of neutral gas in the Milky Way and external galaxies. This project is a browser-based scientific explainer: it separates the frequency-redshift relation from local velocity conventions, then uses a deliberately synthetic Galactic model to explore spectra, longitude-velocity structure, and optical-depth effects.
 
-## Scientific Model
+The premium dashboard is a **research cockpit**, not a fake survey console. The central interactive field is generated from the same synthetic radiative-transfer model as the spectrum panel, and imported observations remain visibly distinct from model output.
 
-The rest frequency is
+## Scientific Model
 
 ```text
 nu_0 = 1420.40575177 MHz
-```
-
-For a cosmological redshift,
-
-```text
 nu_obs = nu_0 / (1 + z)
-```
 
-The browser reports three coordinate conventions for the same redshift:
-
-```text
 v_radio        = c z / (1 + z)
 v_optical      = c z
 v_relativistic = c [((1 + z)^2 - 1) / ((1 + z)^2 + 1)]
-```
 
-These are alternative ways to label a spectrum. A cosmological redshift is not automatically a local peculiar velocity.
-
-The synthetic slab uses
-
-```text
 T_B(v) = (T_s - T_c) [1 - exp(-tau(v))]
-```
 
-and compares two model-dependent column-density quantities:
-
-```text
 N_HI thin = 1.823e18 integral T_B(v) dv
 N_HI slab = 1.823e18 T_s integral tau(v) dv
-```
 
-The first is the optically thin approximation. The second is exact only within the project's uniform-slab spin-temperature and optical-depth assumptions.
-
-A simplified axisymmetric rotation relation motivates the synthetic longitude-dependent components:
-
-```text
 v_los = [Theta(R) R0/R - Theta0] sin(l)
 ```
 
-## Reproducibility contract
+The velocity expressions are alternative spectral-coordinate labels. A cosmological redshift is not automatically a local peculiar velocity. The uniform-slab column estimate is exact only inside the stated spin-temperature and optical-depth assumptions.
 
-The browser and Python generator now share the same deterministic synthetic-spectrum contract:
+## Interactive Dashboard
+
+- Responsive dark research-cockpit layout with a parameter rail, metrics, diagnostics, and navigation.
+- Interactive `l-v-T_B` viewport: Galactic longitude, radio velocity, and **synthetic** brightness temperature.
+- Drag rotation, wheel zoom, reset, and an explicit auto-rotation control.
+- Synthetic H I spectrum, Galactic plane view, longitude-velocity ridge, frequency-convention panel, and tangent-point diagnostic.
+- Export of the current synthetic spectrum as CSV.
+
+The central field is not a 3D distance reconstruction of the Milky Way and not a catalogue of H I detections. Its colour and geometry encode the active teaching-model state only. See [`docs/dashboard_data_modes.md`](docs/dashboard_data_modes.md).
+
+## Importing Your Data
+
+The default laboratory output is synthetic. Imported spectra are browser-local overlays and never change the synthetic model.
+
+### CSV
+
+CSV input requires a velocity column and a brightness-temperature column. Supported aliases are documented in [`docs/observed-spectrum-import.md`](docs/observed-spectrum-import.md).
+
+### Conservative 1D FITS
+
+The browser also accepts a restricted FITS subset:
+
+```text
+primary Image HDU
+NAXIS = 1
+BUNIT = K or Kelvin
+CTYPE1 contains VELO, VRAD, or VOPT
+CUNIT1 = km/s or m/s
+CRVAL1, CDELT1, CRPIX1 present
+```
+
+It applies `BSCALE` and `BZERO`, converts m/s to km/s, and rejects cubes, tables, non-Kelvin products, missing WCS metadata, and frequency-only axes rather than guessing a convention. See [`docs/fits_velocity_import.md`](docs/fits_velocity_import.md).
+
+For imported emission spectra, the browser computes only:
+
+```text
+N_HI thin = 1.823e18 integral T_B(v) dv
+```
+
+It does **not** infer optical depth, spin temperature, slab correction, source association, Galactic coordinates, distance, or a 3D location.
+
+## Reproducibility Contract
+
+The browser and Python generator share:
 
 ```text
 rest frequency     = 1420.40575177 MHz
@@ -64,61 +82,34 @@ spectrum channels  = 520
 N_HI thin factor   = 1.823e18 cm^-2 per K km/s
 ```
 
-`tools/validate_model.py` checks the physical equations, velocity convention ordering, tangent-point behaviour, optical-depth limits, velocity span, and channel count. `tools/validate_velocity_conventions.py` independently checks that radio, optical, and relativistic spectral-coordinate labels agree at very low redshift, diverge at high redshift, and remain inverse-consistent with the rest-frequency relation where applicable. `tools/validate_browser_contract.js` statically guards the browser implementation against drifting away from the Python reference constants and equations.
-
-## Observed-spectrum overlay
-
-The default laboratory output is synthetic. The optional CSV overlay lets you compare a user-supplied brightness-temperature spectrum against the synthetic model while preserving a visible provenance status on the page.
-
-For an imported emission spectrum, the browser calculates only
-
-```text
-N_HI thin = 1.823e18 integral T_B(v) dv
-```
-
-It does **not** infer optical depth, spin temperature, a slab correction, self-absorption, or a best-fitting Galactic model from those data. The overlay never alters the synthetic spectrum or its controls.
-
-See [`docs/observed-spectrum-import.md`](docs/observed-spectrum-import.md) for supported column names, CSV format, provenance notes, and interpretation limits.
-
-## Features
-
-- Exact redshifted frequency readout from `nu_obs = nu_0 / (1 + z)`.
-- Radio, optical, and relativistic spectral-coordinate comparison.
-- Synthetic multi-component H I spectrum with radiative-transfer and optically-thin curves.
-- Uniform-slab and optically-thin N_HI comparison with a visible correction factor.
-- Provenance-aware CSV overlay for imported velocity/brightness-temperature spectra.
-- Optically-thin N_HI integration for imported emission spectra, visibly separate from the synthetic slab estimate.
-- Milky Way top-down line-of-sight view and synthetic longitude-velocity ridge.
-- Tangent-point diagnostic for idealised inner-Galaxy circular motion.
-- CSV export of the synthetic spectrum.
-- Matching Python generator, velocity-convention guard, and browser-contract validation scripts.
-
-## Running Locally
-
-Open `index.html` in a modern browser.
-
-For the synthetic tables and checks:
+Validation protects the physical and interface contracts:
 
 ```bash
 python tools/generate_21cm_spectrum.py
 python tools/validate_model.py
 python tools/validate_velocity_conventions.py
-node tools/validate_browser_contract.js
 python tools/validate_import_contract.py
+node tools/validate_browser_contract.js
+node tools/validate_dashboard_contract.js
+node tools/validate_fits_import.js
 ```
 
 The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_table.csv`.
 
+## Running Locally
+
+Open `index.html` in a modern browser. No build step is required.
+
 ## Limitations
 
-This is a pedagogical synthetic model with an optional visual data overlay, not a survey-analysis pipeline.
+This remains a pedagogical synthetic model with a provenance-aware import layer, not a survey-analysis pipeline.
 
-- Galactic components are illustrative Gaussian optical-depth profiles, not observed H I spectra or a fitted rotation curve.
-- Imported data are displayed without baseline fitting, calibration checks, velocity-frame conversion, beam correction, resampling, uncertainty propagation, or parameter fitting.
-- The slab estimate assumes a uniform spin temperature and does not handle self-absorption, multiple phases, beam filling, or line-of-sight temperature structure.
+- Galactic components are illustrative Gaussian optical-depth profiles, not a fitted Milky Way model.
+- The central `l-v-T_B` field is synthetic phase space, not a distance-resolved H I map.
+- FITS support is limited to a safe 1D primary image subset; cubes, tables, and frequency axes are intentionally rejected.
+- Imported data are not baseline-fitted, calibration-checked, velocity-frame-converted, beam-corrected, resampled, uncertainty-propagated, or parameter-fitted.
+- The slab estimate assumes uniform spin temperature and does not model self-absorption, multiple phases, beam filling, or line-of-sight temperature structure.
 - The tangent-point construction is meaningful only for idealised inner-Galaxy circular sightlines.
-- It does not model telescope beams, calibration, receiver noise, baseline subtraction, bandwidth response, or instrumental selection effects.
-- Spectral conventions are shown for clarity; their labels do not turn cosmological redshift into a local velocity measurement.
 
 ## Research References
 
@@ -127,8 +118,8 @@ This is a pedagogical synthetic model with an optional visual data overlay, not 
 - HI4PI Collaboration et al., 2016, *HI4PI: A full-sky H I survey based on EBHIS and GASS*.
 - Rohlfs & Wilson, *Tools of Radio Astronomy*.
 - Draine, *Physics of the Interstellar and Intergalactic Medium*.
-- Furlanetto, Oh & Briggs, 2006, 21 cm cosmology review.
+- NASA/IAU FITS Standard, primary HDU and WCS conventions.
 
 ## Suggested GitHub Topics
 
-`radio-astronomy`, `hydrogen-line`, `21cm`, `neutral-hydrogen`, `spectroscopy`, `astrophysics`, `scientific-visualisation`, `javascript`, `python`, `github-pages`
+`radio-astronomy`, `hydrogen-line`, `21cm`, `neutral-hydrogen`, `spectroscopy`, `astrophysics`, `scientific-visualisation`, `javascript`, `python`, `github-pages`, `fits`
