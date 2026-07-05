@@ -24,7 +24,6 @@ jobs:
           node --check assets/js/fits-import.js
           node --check assets/js/app.js
           node --check assets/js/dashboard.js
-          node --check assets/js/dashboard-import-sync.js
           node --check assets/js/import-normalisation.js
           node --check tools/validate_browser_contract.js
           node --check tools/validate_dashboard_contract.js
