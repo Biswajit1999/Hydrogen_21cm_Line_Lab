@@ -2,7 +2,7 @@ name: Validate 21 cm laboratory
 
 on:
   push:
-    branches: [main, velocity-conventions-validation-v2]
+    branches: [main, velocity-conventions-validation-v2, dashboard-ui-provenance-v1]
   pull_request:
 
 permissions:
@@ -19,13 +19,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Parse browser spectrum overlay sources
+      - name: Parse browser sources
         run: |
           node --check assets/js/app.js
+          node --check assets/js/dashboard.js
           node --check assets/js/import-normalisation.js
           node --check tools/validate_browser_contract.js
+          node --check tools/validate_dashboard_contract.js
       - name: Validate browser physics contract
         run: node tools/validate_browser_contract.js
+      - name: Validate dashboard provenance contract
+        run: node tools/validate_dashboard_contract.js
       - name: Generate deterministic synthetic tables
         run: python tools/generate_21cm_spectrum.py
       - name: Validate physical model checks
