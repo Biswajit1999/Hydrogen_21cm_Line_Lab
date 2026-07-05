@@ -54,7 +54,7 @@
       fail("CTYPE1 must be an explicit velocity axis (VELO, VRAD, or VOPT); frequency-only FITS needs declared convention conversion");
     }
     const bunit = String(header.BUNIT || "").toLowerCase().replace(/\s/g, "");
-    if (!/(^k$|kelvin|k\b)/.test(bunit)) fail(`BUNIT='${header.BUNIT || "missing"}' is unsupported; brightness temperature must be in K`);
+    if (!["k", "kelvin"].includes(bunit)) fail(`BUNIT='${header.BUNIT || "missing"}' is unsupported; brightness temperature must be in K`);
     ["CRVAL1", "CDELT1", "CRPIX1", "CUNIT1"].forEach((key) => {
       if (header[key] === undefined || header[key] === null || header[key] === "") fail(`${key} is required for a calibrated velocity axis`);
     });
