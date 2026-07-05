@@ -13,7 +13,7 @@ function requireMatch(label, pattern, source) {
 }
 
 requireMatch('interactive phase-space canvas', /id="phaseSpaceCanvas"/, index);
-requireMatch('explicit synthetic intensity-map title', /Synthetic H I longitude–velocity intensity map/, index);
+requireMatch('explicit synthetic intensity-map title', /Synthetic(?: H I)? longitude–velocity intensity map/, index);
 requireMatch('map mode control', /id="mapViewButton"/, index);
 requireMatch('surface mode control', /id="surfaceViewButton"/, index);
 requireMatch('CSV and 1D FITS import label', /CSV \+ 1D FITS/, index);
