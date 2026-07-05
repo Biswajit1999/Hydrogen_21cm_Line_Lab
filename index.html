@@ -13,14 +13,14 @@
       <div class="brand"><div class="brand-mark" aria-hidden="true">H<span>I</span></div><div><strong>21 cm Lab</strong><span>research cockpit</span></div></div>
       <nav class="nav-list">
         <button class="nav-item active" type="button" data-scroll-target="dashboard"><span>◈</span>Dashboard</button>
-        <button class="nav-item" type="button" data-scroll-target="phase-space-panel"><span>◌</span>3D field</button>
+        <button class="nav-item" type="button" data-scroll-target="phase-space-panel"><span>◌</span>H I map</button>
         <button class="nav-item" type="button" data-scroll-target="spectrum-panel"><span>⌁</span>Spectrum lab</button>
         <button class="nav-item" type="button" data-scroll-target="galactic-panels"><span>◎</span>Galactic geometry</button>
         <button class="nav-item" type="button" data-scroll-target="import-panel"><span>⇪</span>Import data</button>
         <button class="nav-item" type="button" data-scroll-target="equation-panel"><span>Σ</span>Model equations</button>
       </nav>
       <section class="sidebar-status"><span class="status-dot"></span><div><strong>Model status</strong><span id="sidebarMode">Synthetic model</span></div></section>
-      <p class="sidebar-note">The central field is a synthetic longitude-velocity-brightness view generated from the documented teaching model. It is not a survey catalogue or a 3D distance reconstruction.</p>
+      <p class="sidebar-note">The centrepiece is a synthetic longitude–velocity intensity view generated from the documented teaching model. It is not a survey catalogue or a 3D distance reconstruction.</p>
     </aside>
 
     <main class="workspace">
@@ -62,9 +62,9 @@
 
         <section class="centre-column">
           <article id="phase-space-panel" class="panel field-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Interactive viewport</p><h2>Synthetic H I longitude–velocity–brightness field</h2></div><div class="view-controls"><button id="autoRotateButton" class="icon-button" type="button" aria-pressed="false">Auto rotate: off</button><button id="resetViewButton" class="icon-button" type="button">Reset view</button></div></div>
-            <canvas id="phaseSpaceCanvas" width="1080" height="660" aria-label="Interactive synthetic longitude velocity brightness field"></canvas>
-            <div class="field-caption"><span><i class="legend-chip intensity"></i> Relative synthetic brightness temperature</span><span><i class="legend-chip axis"></i> Axes: Galactic longitude · radio velocity · T<sub>B</sub></span><span id="fieldStatus">Drag to rotate · wheel to zoom · visualisation uses the current synthetic model</span></div>
+            <div class="panel-heading"><div><p class="section-kicker">Model phase space</p><h2>Synthetic H I longitude–velocity intensity map</h2></div><div class="view-controls" role="group" aria-label="Phase-space display mode"><button id="mapViewButton" class="icon-button is-active" type="button" aria-pressed="true">Intensity map</button><button id="surfaceViewButton" class="icon-button" type="button" aria-pressed="false">3D surface</button><button id="resetViewButton" class="icon-button" type="button">Reset surface</button></div></div>
+            <canvas id="phaseSpaceCanvas" width="1080" height="640" aria-label="Synthetic H I longitude velocity intensity map with optional 3D surface view"></canvas>
+            <div class="field-caption"><span><i class="legend-chip intensity"></i> Relative synthetic brightness temperature, T<sub>B</sub>(l, v)</span><span><i class="legend-chip axis"></i> Axes: Galactic longitude and radio velocity</span><span id="fieldStatus">Map mode · selected longitude is shown in gold · surface mode encodes the same model as height</span></div>
           </article>
           <article id="spectrum-panel" class="panel spectrum-panel">
             <div class="panel-heading"><div><p class="section-kicker">Spectrum laboratory</p><h2>Synthetic H I profile with optional imported overlay</h2></div><span id="spectrumMode" class="panel-tag">synthetic only</span></div>
@@ -99,6 +99,7 @@
   </div>
   <script src="assets/js/fits-import.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/frequency-conventions.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
