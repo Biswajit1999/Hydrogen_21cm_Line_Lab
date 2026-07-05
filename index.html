@@ -51,10 +51,10 @@
           </article>
 
           <article id="import-panel" class="panel import-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Your data</p><h2>Observed spectrum overlay</h2></div><span class="panel-tag safe">CSV only</span></div>
-            <p class="panel-copy">Import a velocity–brightness-temperature CSV. It is shown only as a labelled spectrum overlay; the laboratory will not infer optical depth, a distance, or a 3D H I position from it.</p>
+            <div class="panel-heading"><div><p class="section-kicker">Your data</p><h2>Observed spectrum overlay</h2></div><span class="panel-tag safe">CSV + 1D FITS</span></div>
+            <p class="panel-copy">Import a CSV or conservative 1D FITS brightness-temperature spectrum. FITS must declare a velocity axis in km/s or m/s and a Kelvin brightness unit. Imported data stay spectrum-only: no optical depth, distance, or 3D H I position is inferred.</p>
             <label>Dataset or survey citation<input id="sourceLabel" type="text" placeholder="e.g. HI4PI, l=..., frame=LSR, processing..."></label>
-            <label class="drop-zone" id="dropZone" for="observedFile"><input id="observedFile" type="file" accept=".csv,text/csv"><span class="drop-icon">⇪</span><strong>Drop a CSV here or choose a file</strong><small>Required columns: velocity and brightness temperature. FITS is not parsed in this browser prototype.</small></label>
+            <label class="drop-zone" id="dropZone" for="observedFile"><input id="observedFile" type="file" accept=".csv,.fits,.fit,.fts,text/csv,application/fits"><span class="drop-icon">⇪</span><strong>Drop a CSV or 1D FITS file here</strong><small>CSV requires velocity and brightness-temperature columns. FITS accepts only a 1D primary Image HDU with VELO/VRAD/VOPT axis, km/s or m/s, and BUNIT in K.</small></label>
             <button id="clearObservedButton" class="secondary" type="button">Clear observed overlay</button>
             <div id="dataStatus" class="data-status" aria-live="polite">Synthetic model only. No observed spectrum is loaded.</div>
           </article>
@@ -97,6 +97,7 @@
       <footer class="site-footer">Hydrogen 21 cm Line Lab · Browser-only scientific visualisation · Synthetic state and imported user data are kept explicitly separate.</footer>
     </main>
   </div>
+  <script src="assets/js/fits-import.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
