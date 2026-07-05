@@ -6,7 +6,15 @@
 
   function fail(message) { throw new Error(`FITS import rejected: ${message}`); }
   function parseCardValue(card) {
-    const raw = card.slice(10, 80).split("/")[0].trim();
+    const source = card.slice(10, 80);
+    let quoted = false;
+    let raw = "";
+    for (const character of source) {
+      if (character === "'") { quoted = !quoted; raw += character; continue; }
+      if (character === "/" && !quoted) break;
+      raw += character;
+    }
+    raw = raw.trim();
     if (!raw) return null;
     if (raw.startsWith("'")) {
       const end = raw.indexOf("'", 1);
