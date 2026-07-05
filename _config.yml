@@ -1,0 +1,11 @@
+include:
+  - assets
+  - docs
+  - data
+  - tools
+
+exclude:
+  - README.md
+  - LICENSE
+  - CITATION.cff
+  - nojekyll
