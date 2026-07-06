@@ -22,94 +22,23 @@
       <section class="sidebar-status"><span class="status-dot"></span><div><strong>Model status</strong><span id="sidebarMode">Synthetic model</span></div></section>
       <p class="sidebar-note">The centrepiece is a synthetic longitude–velocity intensity view generated from the documented teaching model. It is not a survey catalogue or a 3D distance reconstruction.</p>
     </aside>
-
     <main class="workspace">
-      <header class="command-bar">
-        <div><p class="eyebrow">Radio astronomy · neutral hydrogen</p><h1>Hydrogen 21 cm Line Lab</h1><p class="subtitle">Mapping neutral hydrogen through a documented synthetic H I model, explicit velocity conventions, and provenance-aware spectrum import.</p></div>
-        <div class="command-state"><span class="provenance-pill" id="provenancePill">Synthetic model active</span><span class="author-badge">Biswajit Jana · Researcher</span></div>
-      </header>
-
-      <section class="metric-strip" aria-label="Current model summary">
-        <article class="metric-card"><span>Rest frequency</span><strong>1420.4058 MHz</strong><small>H I hyperfine line</small></article>
-        <article class="metric-card"><span>Observed frequency</span><strong id="observedFrequency">1420.41 MHz</strong><small>from selected redshift</small></article>
-        <article class="metric-card"><span>Radio coordinate</span><strong id="velocity">0.0 km/s</strong><small>coordinate convention</small></article>
-        <article class="metric-card"><span>Uniform-slab N<sub>HI</sub></span><strong id="columnDensity">0.00e+00 cm<sup>-2</sup></strong><small>synthetic slab estimate</small></article>
-      </section>
-
+      <header class="command-bar"><div><p class="eyebrow">Radio astronomy · neutral hydrogen</p><h1>Hydrogen 21 cm Line Lab</h1><p class="subtitle">Mapping neutral hydrogen through a documented synthetic H I model, explicit velocity conventions, and provenance-aware spectrum import.</p></div><div class="command-state"><span class="provenance-pill" id="provenancePill">Synthetic model active</span><span class="author-badge">Biswajit Jana · Researcher</span></div></header>
+      <section class="metric-strip" aria-label="Current model summary"><article class="metric-card"><span>Rest frequency</span><strong>1420.4058 MHz</strong><small>H I hyperfine line</small></article><article class="metric-card"><span>Observed frequency</span><strong id="observedFrequency">1420.41 MHz</strong><small>from selected redshift</small></article><article class="metric-card"><span>Radio coordinate</span><strong id="velocity">0.0 km/s</strong><small>coordinate convention</small></article><article class="metric-card"><span>Uniform-slab N<sub>HI</sub></span><strong id="columnDensity">0.00e+00 cm<sup>-2</sup></strong><small>synthetic slab estimate</small></article></section>
       <section id="dashboard" class="dashboard-grid">
         <section class="left-rail">
-          <article class="panel model-stream-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Model layers</p><h2>Synthetic H I components</h2></div><span class="panel-tag safe">3 active</span></div>
-            <ul class="model-layer-list">
-              <li><span class="layer-dot cyan"></span><div><strong>Local gas</strong><small>Gaussian optical-depth component</small></div><b>linked</b></li>
-              <li><span class="layer-dot violet"></span><div><strong>Inner / tangent gas</strong><small>Longitude-dependent velocity ridge</small></div><b>linked</b></li>
-              <li><span class="layer-dot magenta"></span><div><strong>Outer-arm term</strong><small>Broad synthetic contribution</small></div><b>linked</b></li>
-            </ul>
-            <p>All three layers are model terms, not catalogue detections.</p>
-          </article>
-
-          <article class="panel controls-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Physical controls</p><h2>Model parameters</h2></div><span class="panel-tag">editable</span></div>
-            <label>Galactic longitude <output id="longitudeOut">35 deg</output><input id="longitude" type="range" min="0" max="180" value="35" step="1"></label>
-            <label>Flat rotation speed <output id="rotationOut">220 km/s</output><input id="rotationSpeed" type="range" min="160" max="260" value="220" step="1"></label>
-            <label>Cosmological redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label>
-            <label>Spin temperature <output id="spinOut">120 K</output><input id="spinTemperature" type="range" min="20" max="1000" value="120" step="5"></label>
-            <label>Peak optical depth <output id="tauOut">0.12</output><input id="tauPeak" type="range" min="0.001" max="1.5" value="0.12" step="0.001"></label>
-            <label>Line-width sigma <output id="sigmaOut">9.0 km/s</output><input id="sigmaVelocity" type="range" min="1" max="45" value="9" step="0.5"></label>
-            <label>Continuum level <output id="continuumOut">2.73 K</output><input id="continuum" type="range" min="0" max="80" value="2.73" step="0.1"></label>
-            <button id="exportButton" type="button">Export synthetic spectrum CSV</button>
-          </article>
-
-          <article id="import-panel" class="panel import-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Your data</p><h2>Observed spectrum overlay</h2></div><span class="panel-tag safe">CSV + 1D FITS</span></div>
-            <p class="panel-copy">Import a CSV or conservative 1D FITS brightness-temperature spectrum. FITS must declare a velocity axis in km/s or m/s and a Kelvin brightness unit. Imported data stay spectrum-only: no optical depth, distance, or 3D H I position is inferred.</p>
-            <label>Dataset or survey citation<input id="sourceLabel" type="text" placeholder="e.g. HI4PI, l=..., frame=LSR, processing..."></label>
-            <label class="drop-zone" id="dropZone" for="observedFile"><input id="observedFile" type="file" accept=".csv,.fits,.fit,.fts,text/csv,application/fits"><span class="drop-icon">⇪</span><strong>Drop a CSV or 1D FITS file here</strong><small>CSV requires velocity and brightness-temperature columns. FITS accepts only a 1D primary Image HDU with VELO/VRAD/VOPT axis, km/s or m/s, and BUNIT in K.</small></label>
-            <button id="clearObservedButton" class="secondary" type="button">Clear observed overlay</button>
-            <div id="dataStatus" class="data-status" aria-live="polite">Synthetic model only. No observed spectrum is loaded.</div>
-          </article>
+          <article class="panel model-stream-panel"><div class="panel-heading"><div><p class="section-kicker">Model layers</p><h2>Synthetic H I components</h2></div><span class="panel-tag safe">3 active</span></div><ul class="model-layer-list"><li><span class="layer-dot cyan"></span><div><strong>Local gas</strong><small>Gaussian optical-depth component</small></div><b>linked</b></li><li><span class="layer-dot violet"></span><div><strong>Inner / tangent gas</strong><small>Longitude-dependent velocity ridge</small></div><b>linked</b></li><li><span class="layer-dot magenta"></span><div><strong>Outer-arm term</strong><small>Broad synthetic contribution</small></div><b>linked</b></li></ul><p>All three layers are model terms, not catalogue detections.</p></article>
+          <article class="panel controls-panel"><div class="panel-heading"><div><p class="section-kicker">Physical controls</p><h2>Model parameters</h2></div><span class="panel-tag">editable</span></div><label>Galactic longitude <output id="longitudeOut">35 deg</output><input id="longitude" type="range" min="0" max="180" value="35" step="1"></label><label>Flat rotation speed <output id="rotationOut">220 km/s</output><input id="rotationSpeed" type="range" min="160" max="260" value="220" step="1"></label><label>Cosmological redshift <output id="redshiftOut">0.000</output><input id="redshift" type="range" min="0" max="0.25" value="0.02" step="0.001"></label><label>Spin temperature <output id="spinOut">120 K</output><input id="spinTemperature" type="range" min="20" max="1000" value="120" step="5"></label><label>Peak optical depth <output id="tauOut">0.12</output><input id="tauPeak" type="range" min="0.001" max="1.5" value="0.12" step="0.001"></label><label>Line-width sigma <output id="sigmaOut">9.0 km/s</output><input id="sigmaVelocity" type="range" min="1" max="45" value="9" step="0.5"></label><label>Continuum level <output id="continuumOut">2.73 K</output><input id="continuum" type="range" min="0" max="80" value="2.73" step="0.1"></label><button id="exportButton" type="button">Export synthetic spectrum CSV</button></article>
+          <article id="import-panel" class="panel import-panel"><div class="panel-heading"><div><p class="section-kicker">Your data</p><h2>Observed spectrum overlay</h2></div><span class="panel-tag safe">CSV + 1D FITS</span></div><p class="panel-copy">Import a CSV or conservative 1D FITS brightness-temperature spectrum. FITS must declare a velocity axis in km/s or m/s and a Kelvin brightness unit. Imported data stay spectrum-only: no optical depth, distance, or 3D H I position is inferred.</p><label>Dataset or survey citation<input id="sourceLabel" type="text" placeholder="e.g. HI4PI, l=..., frame=LSR, processing..."></label><label class="drop-zone" id="dropZone" for="observedFile"><input id="observedFile" type="file" accept=".csv,.fits,.fit,.fts,text/csv,application/fits"><span class="drop-icon">⇪</span><strong>Drop a CSV or 1D FITS file here</strong><small>CSV requires velocity and brightness-temperature columns. FITS accepts only a 1D primary Image HDU with VELO/VRAD/VOPT axis, km/s or m/s, and BUNIT in K.</small></label><button id="clearObservedButton" class="secondary" type="button">Clear observed overlay</button><div id="dataStatus" class="data-status" aria-live="polite">Synthetic model only. No observed spectrum is loaded.</div></article>
         </section>
-
-        <section class="centre-column">
-          <article id="phase-space-panel" class="panel field-panel">
-            <div class="panel-heading"><div><p class="section-kicker">H I phase-space console</p><h2>Synthetic longitude–velocity intensity map</h2></div><div class="view-controls" role="group" aria-label="Phase-space display mode"><button id="mapViewButton" class="icon-button is-active" type="button" aria-pressed="true">Intensity map</button><button id="surfaceViewButton" class="icon-button" type="button" aria-pressed="false">3D surface</button><button id="resetViewButton" class="icon-button" type="button">Reset surface</button></div></div>
-            <canvas id="phaseSpaceCanvas" width="1080" height="640" aria-label="Synthetic H I longitude velocity intensity map with optional 3D surface view"></canvas>
-            <div class="field-caption"><span><i class="legend-chip intensity"></i> Relative synthetic brightness temperature, T<sub>B</sub>(l, v)</span><span><i class="legend-chip axis"></i> Axes: Galactic longitude and radio velocity</span><span id="fieldStatus">Map mode · selected longitude is shown in gold · surface mode encodes the same model as height</span></div>
-          </article>
-          <article id="spectrum-panel" class="panel spectrum-panel">
-            <div class="panel-heading"><div><p class="section-kicker">Spectrum overlay</p><h2>Model profile and imported spectrum</h2></div><span id="spectrumMode" class="panel-tag">synthetic only</span></div>
-            <canvas id="spectrumCanvas" width="1080" height="390"></canvas>
-            <div class="plot-key"><span><i class="key-line cyan"></i> Synthetic slab brightness</span><span><i class="key-line gold"></i> Optically thin branch</span><span><i class="key-line magenta"></i> Imported overlay (if loaded)</span></div>
-          </article>
-        </section>
-
-        <section class="right-rail">
-          <article class="panel coordinate-panel"><div class="panel-heading"><div><p class="section-kicker">Spectral coordinate</p><h2>Frequency and velocity conventions</h2></div><span class="panel-tag">z coordinate</span></div><canvas id="frequencyCanvas" width="470" height="320"></canvas><p class="panel-copy">Radio, optical, and relativistic velocity labels are shown for one redshift. They are not interchangeable physical velocities.</p></article>
-          <article class="panel diagnostics-card"><div class="panel-heading"><div><p class="section-kicker">Key diagnostics</p><h2>Current model state</h2></div></div><div class="compact-metrics"><div><span>Tangent radius</span><strong id="tangentRadius">0.00 kpc</strong></div><div><span>Tangent velocity</span><strong id="tangentVelocity">0.0 km/s</strong></div><div><span>Tangent frequency</span><strong id="tangentFrequency">1420.405 MHz</strong></div><div><span>Synthetic components</span><strong id="peakChannels">0</strong></div></div></article>
-          <article class="panel provenance-card"><div class="panel-heading"><div><p class="section-kicker">Data interpretation</p><h2>Provenance guard</h2></div></div><dl class="provenance-list"><div><dt>Field mode</dt><dd id="dataMode">Synthetic l-v-T<sub>B</sub> field</dd></div><div><dt>Imported data</dt><dd id="importedMode">No user spectrum loaded</dd></div><div><dt>Column estimate</dt><dd>Imported spectra use the optically-thin emission conversion only.</dd></div></dl></article>
-        </section>
+        <section class="centre-column"><article id="phase-space-panel" class="panel field-panel"><div class="panel-heading"><div><p class="section-kicker">H I phase-space console</p><h2>Readable synthetic longitude–velocity map</h2></div><div class="view-controls" role="group" aria-label="Phase-space display mode"><button id="mapViewButton" class="icon-button is-active" type="button" aria-pressed="true">Readable map</button><button id="surfaceViewButton" class="icon-button" type="button" aria-pressed="false">Selected slice</button><button id="resetViewButton" class="icon-button" type="button">Reset view</button></div></div><canvas id="phaseSpaceCanvas" width="1080" height="640" aria-label="Synthetic H I longitude velocity brightness-temperature map with selected sightline slice"></canvas><div class="field-caption"><span><i class="legend-chip intensity"></i> Colour = synthetic brightness temperature T<sub>B</sub>(l, v)</span><span><i class="legend-chip axis"></i> x: Galactic longitude · y: radio velocity</span><span id="fieldStatus">Map mode · selected longitude is shown in gold · labels separate local, tangent, and outer-arm model terms</span></div></article><article id="spectrum-panel" class="panel spectrum-panel"><div class="panel-heading"><div><p class="section-kicker">Spectrum overlay</p><h2>Model profile and imported spectrum</h2></div><span id="spectrumMode" class="panel-tag">synthetic only</span></div><canvas id="spectrumCanvas" width="1080" height="390"></canvas><div class="plot-key"><span><i class="key-line cyan"></i> Synthetic slab brightness</span><span><i class="key-line gold"></i> Optically thin branch</span><span><i class="key-line magenta"></i> Imported overlay (if loaded)</span></div></article></section>
+        <section class="right-rail"><article class="panel coordinate-panel"><div class="panel-heading"><div><p class="section-kicker">Spectral coordinate</p><h2>Frequency and velocity conventions</h2></div><span class="panel-tag">z coordinate</span></div><canvas id="frequencyCanvas" width="470" height="320"></canvas><p class="panel-copy">Radio, optical, and relativistic velocity labels are shown for one redshift. They are not interchangeable physical velocities.</p></article><article class="panel diagnostics-card"><div class="panel-heading"><div><p class="section-kicker">Key diagnostics</p><h2>Current model state</h2></div></div><div class="compact-metrics"><div><span>Tangent radius</span><strong id="tangentRadius">0.00 kpc</strong></div><div><span>Tangent velocity</span><strong id="tangentVelocity">0.0 km/s</strong></div><div><span>Tangent frequency</span><strong id="tangentFrequency">1420.405 MHz</strong></div><div><span>Synthetic components</span><strong id="peakChannels">0</strong></div></div></article><article class="panel provenance-card"><div class="panel-heading"><div><p class="section-kicker">Data interpretation</p><h2>Provenance guard</h2></div></div><dl class="provenance-list"><div><dt>Field mode</dt><dd id="dataMode">Synthetic l-v-T<sub>B</sub> field</dd></div><div><dt>Imported data</dt><dd id="importedMode">No user spectrum loaded</dd></div><div><dt>Column estimate</dt><dd>Imported spectra use the optically-thin emission conversion only.</dd></div></dl></article></section>
       </section>
-
-      <section id="galactic-panels" class="lower-grid">
-        <article class="panel split-panel"><div class="panel-heading"><div><p class="section-kicker">Geometry</p><h2>Galactic plane view</h2></div><span class="panel-tag">synthetic</span></div><canvas id="galaxyCanvas" width="540" height="430"></canvas></article>
-        <article class="panel split-panel"><div class="panel-heading"><div><p class="section-kicker">Phase space</p><h2>Longitude–velocity map</h2></div><span class="panel-tag">synthetic</span></div><canvas id="lvCanvas" width="540" height="430"></canvas></article>
-        <article class="panel rotation-panel"><div class="panel-heading"><div><p class="section-kicker">Inner Galaxy</p><h2>Tangent-point rotation diagnostic</h2></div><span class="panel-tag">0 &lt; l &lt; 90 deg</span></div><canvas id="rotationCanvas" width="1080" height="300"></canvas></article>
-      </section>
-
-      <section id="equation-panel" class="equation-grid" aria-label="Model equations">
-        <article><strong>Redshift</strong><span>nu_obs = nu_0 / (1 + z)</span></article>
-        <article><strong>Radio velocity</strong><span>v_radio = c z / (1 + z)</span></article>
-        <article><strong>Brightness</strong><span>T_B = (T_s - T_c)[1 - exp(-tau)]</span></article>
-        <article><strong>Thin column</strong><span>N_HI = 1.823e18 integral T_B dv</span></article>
-        <article><strong>Slab column</strong><span>N_HI = 1.823e18 T_s integral tau dv</span></article>
-        <article><strong>Galactic velocity</strong><span>v_los = [Theta(R)R_0/R - Theta_0]sin(l)</span></article>
-      </section>
+      <section id="galactic-panels" class="lower-grid"><article class="panel split-panel"><div class="panel-heading"><div><p class="section-kicker">Geometry</p><h2>Galactic plane view</h2></div><span class="panel-tag">synthetic</span></div><canvas id="galaxyCanvas" width="540" height="430"></canvas></article><article class="panel split-panel"><div class="panel-heading"><div><p class="section-kicker">Phase space</p><h2>Longitude–velocity map</h2></div><span class="panel-tag">synthetic</span></div><canvas id="lvCanvas" width="540" height="430"></canvas></article><article class="panel rotation-panel"><div class="panel-heading"><div><p class="section-kicker">Inner Galaxy</p><h2>Tangent-point rotation diagnostic</h2></div><span class="panel-tag">0 &lt; l &lt; 90 deg</span></div><canvas id="rotationCanvas" width="1080" height="300"></canvas></article></section>
+      <section id="equation-panel" class="equation-grid" aria-label="Model equations"><article><strong>Redshift</strong><span>nu_obs = nu_0 / (1 + z)</span></article><article><strong>Radio velocity</strong><span>v_radio = c z / (1 + z)</span></article><article><strong>Brightness</strong><span>T_B = (T_s - T_c)[1 - exp(-tau)]</span></article><article><strong>Thin column</strong><span>N_HI = 1.823e18 integral T_B dv</span></article><article><strong>Slab column</strong><span>N_HI = 1.823e18 T_s integral tau dv</span></article><article><strong>Galactic velocity</strong><span>v_los = [Theta(R)R_0/R - Theta_0]sin(l)</span></article></section>
       <footer class="site-footer">Hydrogen 21 cm Line Lab · Browser-only scientific visualisation · Synthetic state and imported user data are kept explicitly separate.</footer>
     </main>
   </div>
-  <script src="assets/js/fits-import.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/frequency-conventions.js"></script>
-  <script src="assets/js/dashboard.js"></script>
+  <script src="assets/js/fits-import.js"></script><script src="assets/js/app.js"></script><script src="assets/js/frequency-conventions.js"></script><script src="assets/js/dashboard.js"></script>
 </body>
 </html>
