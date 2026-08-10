@@ -1,124 +1,120 @@
-# Hydrogen 21 cm Line Lab
+# Hydrogen 21cm Line Lab
 
-Interactive radio-astronomy laboratory for the neutral-hydrogen 21 cm hyperfine line, cosmological frequency shift, spectral-coordinate conventions, synthetic Galactic H I structure, radiative transfer, column-density approximations, and provenance-aware user spectrum import.
+An observation-led browser instrument for exploring Galactic neutral atomic hydrogen (H I) at
+the 1420.40575177 MHz hyperfine line. The console starts from real survey products and keeps a
+forward Galactic rotation model available as an explicitly labelled comparison overlay.
 
-**Author:** Biswajit Jana
+## Observational Products
 
-## Research Motivation
+The default display is not a decorative face-on galaxy. An observer inside the Milky Way cannot
+directly photograph a top-down H I disk: such maps require distance and rotation assumptions.
+This laboratory therefore opens with measured sky and spectral products.
 
-The H I 21 cm line is a major diagnostic of neutral gas in the Milky Way and external galaxies. This project is a browser-based scientific explainer: it separates the frequency-redshift relation from local velocity conventions, then uses a deliberately synthetic Galactic model to explore spectra, longitude-velocity structure, and optical-depth effects.
+| Display | Product Used | Processing in This Repository |
+| --- | --- | --- |
+| H I sky panel | Official HI4PI all-sky public visualisation | Rendered as the observed Galactic sky projection with selectable longitude marker |
+| Spectrum panel | Leiden/Argentine/Bonn (LAB) survey profiles at `b = 0.00 deg`, `0.60 deg` FWHM | Profiles downloaded at 5-degree longitude spacing and interpolated between adjacent observed sightlines |
+| Longitude-velocity panel | The same LAB profiles | Native LSR spectral samples linearly resampled to a common `-300` to `+300 km s^-1` display grid at `1 km s^-1` intervals |
 
-The premium dashboard is a **research cockpit**, not a fake survey console. The central interactive field is generated from the same synthetic radiative-transfer model as the spectrum panel, and imported observations remain visibly distinct from model output.
-
-## Scientific Model
-
-```text
-nu_0 = 1420.40575177 MHz
-nu_obs = nu_0 / (1 + z)
-
-v_radio        = c z / (1 + z)
-v_optical      = c z
-v_relativistic = c [((1 + z)^2 - 1) / ((1 + z)^2 + 1)]
-
-T_B(v) = (T_s - T_c) [1 - exp(-tau(v))]
-
-N_HI thin = 1.823e18 integral T_B(v) dv
-N_HI slab = 1.823e18 T_s integral tau(v) dv
-
-v_los = [Theta(R) R0/R - Theta0] sin(l)
-```
-
-The velocity expressions are alternative spectral-coordinate labels. A cosmological redshift is not automatically a local peculiar velocity. The uniform-slab column estimate is exact only inside the stated spin-temperature and optical-depth assumptions.
-
-For the explicit physical-truth checklist used by the validation suite, see [`docs/science_validation_contract.md`](docs/science_validation_contract.md).
-
-## Interactive Dashboard
-
-- Responsive dark research-cockpit layout with a parameter rail, metrics, diagnostics, and navigation.
-- Interactive `l-v-T_B` viewport: Galactic longitude, radio velocity, and **synthetic** brightness temperature.
-- Drag rotation, wheel zoom, reset, and an explicit auto-rotation control.
-- Synthetic H I spectrum, Galactic plane view, longitude-velocity ridge, frequency-convention panel, and tangent-point diagnostic.
-- Export of the current synthetic spectrum as CSV.
-
-The central field is not a 3D distance reconstruction of the Milky Way and not a catalogue of H I detections. Its colour and geometry encode the active teaching-model state only. See [`docs/dashboard_data_modes.md`](docs/dashboard_data_modes.md).
-
-## Importing Your Data
-
-The default laboratory output is synthetic. Imported spectra are browser-local overlays and never change the synthetic model.
-
-### CSV
-
-CSV input requires a velocity column and a brightness-temperature column. Supported aliases are documented in [`docs/observed-spectrum-import.md`](docs/observed-spectrum-import.md).
-
-### Conservative 1D FITS
-
-The browser also accepts a restricted FITS subset:
+Bundled reduced assets:
 
 ```text
-primary Image HDU
-NAXIS = 1
-BUNIT = K or Kelvin
-CTYPE1 contains VELO, VRAD, or VOPT
-CUNIT1 = km/s or m/s
-CRVAL1, CDELT1, CRPIX1 present
+data/observations/
+  hi4pi_allsky.jpg
+  hi4pi_allsky_metadata.json
+  lab_plane_profiles.json
 ```
 
-It applies `BSCALE` and `BZERO`, converts m/s to km/s, and rejects cubes, tables, non-Kelvin products, missing WCS metadata, and frequency-only axes rather than guessing a convention. See [`docs/fits_velocity_import.md`](docs/fits_velocity_import.md).
+The source and processing metadata remain embedded in the JSON products. Credit for the HI4PI
+visualisation belongs to the HI4PI Collaboration; LAB spectra are supplied through the AIfA
+EU-HOU LAB extraction service.
 
-For imported emission spectra, the browser computes only:
+## Simulation Overlay
+
+Switch on `SIMULATION OVERLAY` to compare the measured LAB spectrum with a controlled forward
+model. Amber curves and the model-components table are computed results, never observational
+data. Adjustable parameters expose the path length, velocity dispersion, rotation curve, Solar
+radius and circular speed, and smooth H I emissivity assumptions.
+
+For rest frequency `nu_0`, the non-relativistic Doppler conversion is:
 
 ```text
-N_HI thin = 1.823e18 integral T_B(v) dv
+nu = nu_0 (1 - v_r / c)
 ```
 
-It does **not** infer optical depth, spin temperature, slab correction, source association, Galactic coordinates, distance, or a 3D location.
-
-## Reproducibility Contract
-
-The browser and Python generator share:
+For circular planar rotation, line-of-sight radial velocity relative to the local standard of
+rest is modelled as:
 
 ```text
-rest frequency     = 1420.40575177 MHz
-velocity span      = 360 km/s
-spectrum channels  = 520
-N_HI thin factor   = 1.823e18 cm^-2 per K km/s
+v_r = [v(R) R_0 / R - V_0] sin(l)
 ```
 
-Validation protects the physical and interface contracts:
+The synthetic brightness-temperature overlay is produced by integrating emissivity cells along
+the sightline and broadening each radial velocity contribution with a Gaussian cloud dispersion.
+It is suitable for testing how kinematic assumptions resemble or disagree with survey spectra,
+not for claiming a unique Galactic reconstruction.
+
+## Architecture
+
+This is a zero-build application designed for a local HTTP server.
+
+```text
+index.html
+assets/
+  css/style.css                 Mission-control layout and display system
+  js/app.js                     Canvas renderer and interaction layer
+  js/physicsWorker.js           LAB loading, interpolation and optional forward model
+data/observations/              Bundled real-data products and metadata
+tools/fetch_lab_observations.py Reproducible public-data acquisition pipeline
+```
+
+All spectral interpolation, l-v image preparation and forward modelling run in
+`physicsWorker.js`. The main thread handles Canvas rendering and controls only, keeping
+interaction smooth even when model settings change rapidly.
+
+## Run
+
+From this directory:
 
 ```bash
-python tools/generate_21cm_spectrum.py
-python tools/validate_model.py
-python tools/validate_velocity_conventions.py
-python tools/validate_import_contract.py
-python tools/validate_science_contract.py
-node tools/validate_browser_contract.js
-node tools/validate_dashboard_contract.js
-node tools/validate_fits_import.js
+python -m http.server 8080
 ```
 
-The generator writes `data/synthetic_21cm_spectrum.csv` and `data/tangent_point_table.csv`. The science-contract validation writes `data/science_contract_summary.csv`.
+Open `http://localhost:8080/`. Web Workers and JSON loading require HTTP rather than opening
+`index.html` directly from the filesystem.
 
-## Running Locally
+## Rebuild Observational Assets
 
-Open `index.html` in a modern browser. No build step is required.
+The compact browser dataset can be regenerated from the public services:
 
-## Limitations
+```bash
+python tools/fetch_lab_observations.py
+```
 
-This remains a pedagogical synthetic model with a provenance-aware import layer, not a survey-analysis pipeline.
+This downloads LAB brightness-temperature profiles for Galactic longitudes `-180 deg` through
+`+180 deg` in `5 deg` increments at `b = 0 deg`, and retrieves the official HI4PI public image.
+The build script records the resampling operation in the JSON provenance block.
 
-- Galactic components are illustrative Gaussian optical-depth profiles, not a fitted Milky Way model.
-- The central `l-v-T_B` field is synthetic phase space, not a distance-resolved H I map.
-- FITS support is limited to a safe 1D primary image subset; cubes, tables, and frequency axes are intentionally rejected.
-- Imported data are not baseline-fitted, calibration-checked, velocity-frame-converted, beam-corrected, resampled, uncertainty-propagated, or parameter-fitted.
-- The slab estimate assumes uniform spin temperature and does not model self-absorption, multiple phases, beam filling, or line-of-sight temperature structure.
-- The tangent-point construction is meaningful only for idealised inner-Galaxy circular sightlines.
+## Scientific Limits
 
-## Research References
+- The LAB slice samples the Galactic plane at 5-degree longitude intervals for responsive
+  teaching and comparison; it is not the complete LAB data cube.
+- Spectral interpolation between adjacent LAB positions is a visual exploration aid.
+- The HI4PI panel is a real all-sky projection from the Solar viewpoint, not a face-on disk.
+- The optional forward model omits radiative-transfer opacity corrections, non-circular flows,
+  distance ambiguity resolution and cloud-by-cloud structure.
 
-- Ewen & Purcell, 1951, first detection of the 21 cm hydrogen line.
-- Field, 1958, spin temperature and the 21 cm line.
-- HI4PI Collaboration et al., 2016, *HI4PI: A full-sky H I survey based on EBHIS and GASS*.
-- Rohlfs & Wilson, *Tools of Radio Astronomy*.
-- Draine, *Physics of the Interstellar and Intergalactic Medium*.
-- NASA/IAU FITS Standard, primary HDU and WCS conventions.
+## References
+
+Binney, J. and Tremaine, S., 2008. *Galactic dynamics*. 2nd ed. Princeton: Princeton
+University Press.
+
+Dickey, J.M. and Lockman, F.J., 1990. H I in the Galaxy. *Annual Review of Astronomy and
+Astrophysics*, 28(1), pp.215-261.
+
+HI4PI Collaboration, 2016. HI4PI: A full-sky H I survey based on EBHIS and GASS.
+*Astronomy & Astrophysics*, 594, A116. https://doi.org/10.1051/0004-6361/201629178.
+
+Kalberla, P.M.W., Burton, W.B., Hartmann, D., Arnal, E.M., Bajaja, E., Morras, R. and
+Poppel, W.G.L., 2005. The Leiden/Argentine/Bonn (LAB) Survey of Galactic H I.
+*Astronomy & Astrophysics*, 440, pp.775-782.

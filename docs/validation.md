@@ -1,35 +1,20 @@
-# Validation Notes
+# Validation Protocol
 
-## Checks Implemented
+Run:
 
-1. **Zero redshift**
+```bash
+python tools/validate_observations.py
+python tools/generate_21cm_spectrum.py
+python tools/validate_model.py
+```
 
-   At `z = 0`, the observed frequency equals the rest frequency.
+`validate_observations.py` checks that the bundled LAB product covers the Galactic plane from
+`-180 deg` through `+180 deg`, includes 73 extracted sightlines on a documented common
+601-channel velocity axis, contains finite positive measured brightness temperatures, and is
+paired with the credited HI4PI image and metadata.
 
-2. **Redshift scaling**
-
-   Increasing `z` must decrease `nu_obs` according to `nu_0 / (1 + z)`.
-
-3. **Optically thin limit**
-
-   For small optical depth, `1 - exp(-tau)` approaches `tau`.
-
-4. **Column-density scaling**
-
-   In the optically thin limit, doubling the brightness-temperature integral doubles `N_HI`.
-
-5. **Gaussian width scaling**
-
-   At fixed peak optical depth and spin temperature, increasing the velocity width increases the integrated column density.
-
-6. **Longitude-velocity behaviour**
-
-   In the first Galactic quadrant, the synthetic tangent component should move toward higher positive velocity at smaller longitude, qualitatively matching the expected behaviour for inner-Galaxy H I in a flat rotation model.
-
-7. **Tangent radius check**
-
-   At `l = 30 deg`, `R_t = R0 sin(l)` should be approximately `4.1 kpc` for `R0 = 8.2 kpc`.
-
-## Scientific Scope
-
-The validation checks the internal consistency of a one-component educational model. It does not validate real telescope calibration, baseline subtraction, multi-component H I fitting, or interferometric imaging products.
+The model reference checks confirm the `1420.40575177 MHz` rest frequency, required Doppler
+conversion, zero radial velocity toward the Galactic centre for circular motion, sign reversal
+between positive and negative longitudes in a symmetric rotation field, and finite
+multi-component brightness-temperature integration. Those latter checks establish internal
+overlay consistency; they are not a calibration of the LAB survey.

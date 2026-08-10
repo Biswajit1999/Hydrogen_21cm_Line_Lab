@@ -1,212 +1,416 @@
-const REST_FREQ_MHZ = 1420.40575177;
-const C_KM_S = 299792.458;
-const COLUMN_FACTOR = 1.823e18;
-const R0_KPC = 8.2;
+(() => {
+  "use strict";
 
-const ids = ["longitude", "rotationSpeed", "redshift", "spinTemperature", "tauPeak", "sigmaVelocity", "continuum"];
-const inputs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-const observedFileInput = document.getElementById("observedFile");
-const sourceLabelInput = document.getElementById("sourceLabel");
-const dataStatus = document.getElementById("dataStatus");
-const dropZone = document.getElementById("dropZone");
-const out = {
-  redshift: document.getElementById("redshiftOut"), longitude: document.getElementById("longitudeOut"), rotation: document.getElementById("rotationOut"), spin: document.getElementById("spinOut"), tau: document.getElementById("tauOut"), sigma: document.getElementById("sigmaOut"), continuum: document.getElementById("continuumOut"), observedFrequency: document.getElementById("observedFrequency"), velocity: document.getElementById("velocity"), columnDensity: document.getElementById("columnDensity"), tangentRadius: document.getElementById("tangentRadius"), tangentVelocity: document.getElementById("tangentVelocity"), tangentFrequency: document.getElementById("tangentFrequency"), peakChannels: document.getElementById("peakChannels"),
-};
-let latestSpectrum = [];
-let observedSpectrum = null;
-
-function value(id) { return Number(inputs[id].value); }
-function setup(canvas) {
-  const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  const width = Math.max(1, canvas.clientWidth);
-  const aspect = Number(canvas.getAttribute("height")) / Number(canvas.getAttribute("width"));
-  const height = Math.max(1, width * aspect);
-  canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
-  const ctx = canvas.getContext("2d"); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  return { ctx, width, height };
-}
-function drawAxes(ctx, width, height, yLabel, xLabel) {
-  ctx.fillStyle = "#0d1116"; ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(255,255,255,.09)";
-  for (let i = 1; i < 5; i += 1) { const y = (height * i) / 5; ctx.beginPath(); ctx.moveTo(52, y); ctx.lineTo(width - 18, y); ctx.stroke(); }
-  ctx.fillStyle = "#aab5bd"; ctx.font = "12px system-ui"; ctx.fillText(yLabel, 12, 22); ctx.fillText(xLabel, width - 150, height - 14);
-}
-function frequencyFromRadioVelocity(velocityKmS) { return REST_FREQ_MHZ * (1 - velocityKmS / C_KM_S); }
-function velocityConventions(redshift) {
-  return {
-    radio: C_KM_S * redshift / (1 + redshift),
-    optical: C_KM_S * redshift,
-    relativistic: C_KM_S * (((1 + redshift) ** 2 - 1) / ((1 + redshift) ** 2 + 1)),
+  const defaults = {
+    modelOverlay: false,
+    longitude: 32,
+    pathLength: 24,
+    velocityDispersion: 7,
+    rotationModel: "flat",
+    solarRadius: 8.2,
+    localSpeed: 236,
+    diskScale: 3.5,
+    spiralContrast: 0.55,
+    brightnessScale: 38,
   };
-}
-function tangentPoint(longitudeDeg, theta0) {
-  const l = longitudeDeg * Math.PI / 180;
-  const sinL = Math.sin(l);
-  const radius = Math.max(0, R0_KPC * Math.abs(sinL));
-  const velocity = longitudeDeg > 0 && longitudeDeg < 90 ? theta0 * (1 - Math.abs(sinL)) : null;
-  return { radius, velocity, frequency: velocity === null ? null : frequencyFromRadioVelocity(velocity) };
-}
-function galacticComponents(longitudeDeg, theta0, tauPeak) {
-  const l = longitudeDeg * Math.PI / 180;
-  const sinL = Math.max(0.05, Math.sin(l));
-  const tangentVelocity = theta0 * (1 - sinL);
-  return [
-    { name: "local gas", velocity: 8 * Math.sin(2 * l), tau: tauPeak * 0.85, widthScale: 1.1 },
-    { name: "inner or tangent gas", velocity: longitudeDeg < 90 ? tangentVelocity : -0.35 * theta0 * Math.sin(l), tau: tauPeak * (longitudeDeg < 90 ? 1.25 : 0.45), widthScale: 0.85 },
-    { name: "outer arm", velocity: longitudeDeg < 95 ? -45 * Math.sin(l) : -25 * Math.sin(l), tau: tauPeak * 0.55, widthScale: 1.35 },
-  ];
-}
-function model() {
-  const longitude = value("longitude"); const rotationSpeed = value("rotationSpeed"); const redshift = value("redshift"); const spinTemperature = value("spinTemperature"); const tauPeak = value("tauPeak"); const sigmaVelocity = value("sigmaVelocity"); const continuum = value("continuum");
-  const observedFreq = REST_FREQ_MHZ / (1 + redshift);
-  const conventions = velocityConventions(redshift);
-  const components = galacticComponents(longitude, rotationSpeed, tauPeak);
-  const tangent = tangentPoint(longitude, rotationSpeed);
-  const samples = 520; const span = 360; const points = [];
-  let integralTb = 0; let integralTau = 0; let last = null;
-  for (let i = 0; i < samples; i += 1) {
-    const velocity = -span / 2 + (span * i) / (samples - 1);
-    const tau = components.reduce((sum, component) => sum + component.tau * Math.exp(-0.5 * ((velocity - component.velocity) / (sigmaVelocity * component.widthScale)) ** 2), 0);
-    const brightness = (spinTemperature - continuum) * (1 - Math.exp(-tau));
-    const thinBrightness = (spinTemperature - continuum) * tau;
-    points.push({ velocity, brightness, thinBrightness, tau });
-    if (last) { const dv = velocity - last.velocity; integralTb += 0.5 * (brightness + last.brightness) * dv; integralTau += 0.5 * (tau + last.tau) * dv; }
-    last = { velocity, brightness, tau };
-  }
-  const columnThin = COLUMN_FACTOR * integralTb;
-  const columnSlab = COLUMN_FACTOR * spinTemperature * integralTau;
-  return { longitude, rotationSpeed, redshift, spinTemperature, tauPeak, sigmaVelocity, continuum, observedFreq, conventions, components, tangent, points, columnThin, columnSlab, opacityCorrection: columnSlab / Math.max(columnThin, 1e-30) };
-}
+  const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
+  const readout = {
+    engineLight: document.getElementById("engine-light"),
+    engine: document.getElementById("engine"),
+    longitudeLive: document.getElementById("longitude-live"),
+    fps: document.getElementById("fps"),
+    peakTemperature: document.getElementById("peak-temperature"),
+    peakVelocity: document.getElementById("peak-velocity"),
+    peakFrequency: document.getElementById("peak-frequency"),
+    velocityRange: document.getElementById("velocity-range"),
+    compute: document.getElementById("compute"),
+    spectrumNote: document.getElementById("spectrum-note"),
+    components: document.getElementById("components"),
+    log: document.getElementById("log"),
+    status: document.getElementById("status"),
+  };
+  const buttons = {
+    export: document.getElementById("export"),
+    reset: document.getElementById("reset"),
+  };
 
-function trapezoidColumn(points) {
-  let integral = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    const previous = points[i - 1]; const current = points[i];
-    integral += 0.5 * (previous.temperature + current.temperature) * (current.velocity - previous.velocity);
-  }
-  return COLUMN_FACTOR * integral;
-}
-function normaliseHeader(value) { return value.trim().toLowerCase().replace(/^\ufeff/, "").replace(/[\s()\[\]{}]/g, "_").replace(/[^a-z0-9_]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, ""); }
-function parseObservedCsv(text, filename) {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
-  if (lines.length < 4) throw new Error("CSV needs a header and at least three numeric rows.");
-  const delimiter = lines[0].includes("\t") ? "\t" : ",";
-  const headers = lines[0].split(delimiter).map(normaliseHeader);
-  const velocityNames = ["velocity_km_s", "velocity", "v_lsr_km_s", "v_lsr", "v_km_s", "v"];
-  const temperatureNames = ["brightness_temperature_k", "brightness_temperature", "tb_k", "t_b_k", "temperature_k", "temperature", "tb"];
-  const velocityIndex = headers.findIndex((header) => velocityNames.includes(header));
-  const temperatureIndex = headers.findIndex((header) => temperatureNames.includes(header));
-  if (velocityIndex < 0 || temperatureIndex < 0) throw new Error("CSV must include a velocity column (velocity_km_s, v_lsr_km_s, or velocity) and a temperature column (brightness_temperature_K, Tb_K, or temperature_K).");
-  const points = [];
-  for (const line of lines.slice(1)) {
-    const cells = line.split(delimiter);
-    const velocity = Number(cells[velocityIndex]); const temperature = Number(cells[temperatureIndex]);
-    if (Number.isFinite(velocity) && Number.isFinite(temperature)) points.push({ velocity, temperature });
-  }
-  points.sort((a, b) => a.velocity - b.velocity);
-  if (points.length < 3) throw new Error("The CSV did not contain at least three valid velocity-temperature rows.");
-  return { filename, points, thinColumn: trapezoidColumn(points) };
-}
-function isFitsFile(file) { return /\.(fits|fit|fts)$/i.test(file.name) || /fits/i.test(file.type || ""); }
-async function parseObservedFile(file) {
-  if (isFitsFile(file)) {
-    if (!window.HI21FitsImport?.parseFitsVelocitySpectrum) throw new Error("FITS parser was not loaded.");
-    const parsed = window.HI21FitsImport.parseFitsVelocitySpectrum(await file.arrayBuffer(), file.name);
-    return { ...parsed, thinColumn: trapezoidColumn(parsed.points) };
-  }
-  const parsed = parseObservedCsv(await file.text(), file.name);
-  return { ...parsed, metadata: { format: "CSV", axisType: "user-declared velocity column", velocityUnit: "declared in header/citation", bunit: "K assumed by CSV contract", frame: "not supplied", object: "not supplied", channelsDeclared: parsed.points.length, channelsAccepted: parsed.points.length } };
-}
+  class Surface {
+    constructor(id) {
+      this.canvas = document.getElementById(id);
+      this.ctx = this.canvas.getContext("2d", { alpha: false, desynchronized: true });
+      this.geometry = null;
+    }
 
-function plotSpectrum(data) {
-  const { ctx, width, height } = setup(document.getElementById("spectrumCanvas"));
-  drawAxes(ctx, width, height, "brightness temperature (K)", "radio velocity (km/s)");
-  const importedPoints = observedSpectrum?.points ?? [];
-  const velocities = [-180, 180, ...importedPoints.map((point) => point.velocity)];
-  const temperatures = [0, ...data.points.flatMap((point) => [point.brightness, point.thinBrightness]), ...importedPoints.map((point) => point.temperature)];
-  const xMin = Math.min(...velocities); const xMax = Math.max(...velocities); const yMin = Math.min(...temperatures); const yMax = Math.max(1, ...temperatures);
-  const pad = { left: 52, right: 18, top: 22, bottom: importedPoints.length ? 66 : 44 };
-  const px = (x) => pad.left + ((x - xMin) / Math.max(1e-12, xMax - xMin)) * (width - pad.left - pad.right);
-  const py = (y) => height - pad.bottom - ((y - yMin) / Math.max(1e-12, yMax - yMin)) * (height - pad.top - pad.bottom);
-  const line = (points, key, stroke, lineWidth) => { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.beginPath(); points.forEach((point, index) => { const x = px(point.velocity); const y = py(point[key]); if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke(); };
-  line(data.points, "thinBrightness", "rgba(244,191,117,.72)", 1.6); line(data.points, "brightness", "#66d9ef", 2.4);
-  if (importedPoints.length) line(importedPoints, "temperature", "#f17db2", 2.2);
-  ctx.fillStyle = "#83e6a2"; data.components.forEach((component) => { const x = px(component.velocity); ctx.strokeStyle = "rgba(131,230,162,.32)"; ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, height - pad.bottom); ctx.stroke(); ctx.fillText(component.name, Math.min(x + 5, width - 130), pad.top + 16); });
-  ctx.fillStyle = "#aab5bd"; ctx.font = "12px system-ui";
-  ctx.fillText(`synthetic: thin NHI=${data.columnThin.toExponential(2)}   slab NHI=${data.columnSlab.toExponential(2)}   tau correction=${data.opacityCorrection.toFixed(2)}`, pad.left, height - (importedPoints.length ? 32 : 14));
-  if (observedSpectrum) { ctx.fillStyle = "#f17db2"; ctx.fillText(`imported: ${observedSpectrum.filename}   thin-emission NHI=${observedSpectrum.thinColumn.toExponential(2)} cm^-2`, pad.left, height - 14); }
-}
-function plotGalaxy(data) {
-  const { ctx, width, height } = setup(document.getElementById("galaxyCanvas"));
-  ctx.fillStyle = "#0d1116"; ctx.fillRect(0, 0, width, height);
-  const cx = width / 2; const cy = height / 2; const scale = Math.min(width, height) / 30;
-  ctx.strokeStyle = "rgba(255,255,255,.08)"; for (let r = 4; r <= 14; r += 2) { ctx.beginPath(); ctx.arc(cx, cy, r * scale, 0, Math.PI * 2); ctx.stroke(); }
-  for (let arm = 0; arm < 4; arm += 1) { ctx.strokeStyle = arm % 2 ? "rgba(102,217,239,.28)" : "rgba(131,230,162,.22)"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 260; i += 1) { const t = i / 24 + arm * Math.PI / 2; const r = 2.1 + 0.42 * t; const x = cx + r * Math.cos(t) * scale; const y = cy + r * Math.sin(t) * scale; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); }
-  const sunX = cx + R0_KPC * scale; const sunY = cy; const l = data.longitude * Math.PI / 180; const rayX = sunX - Math.cos(l) * 16 * scale; const rayY = sunY - Math.sin(l) * 16 * scale;
-  ctx.strokeStyle = "#f4bf75"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(rayX, rayY); ctx.stroke(); ctx.fillStyle = "#f4bf75"; ctx.beginPath(); ctx.arc(sunX, sunY, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#aab5bd"; ctx.font = "12px system-ui"; ctx.fillText("Sun", sunX + 8, sunY - 8); ctx.fillText(`synthetic l = ${data.longitude.toFixed(0)} deg`, 16, 24);
-}
-function heat(t) { return `rgb(${Math.round(13 + 230 * t)},${Math.round(29 + 160 * Math.max(0, t - .1))},${Math.round(48 + 170 * (1 - t))})`; }
-function plotLongitudeVelocity(data) {
-  const { ctx, width, height } = setup(document.getElementById("lvCanvas")); ctx.fillStyle = "#0d1116"; ctx.fillRect(0, 0, width, height);
-  const rows = 120; const cols = 180;
-  for (let ix = 0; ix < cols; ix += 1) { const longitude = 180 * ix / (cols - 1); const components = galacticComponents(longitude, data.rotationSpeed, data.tauPeak); for (let iy = 0; iy < rows; iy += 1) { const velocity = 180 - 360 * iy / (rows - 1); let intensity = 0; components.forEach((component) => { intensity += component.tau * Math.exp(-.5 * ((velocity - component.velocity) / (data.sigmaVelocity * component.widthScale)) ** 2); }); ctx.fillStyle = heat(Math.min(1, intensity / Math.max(.1, data.tauPeak * 1.4))); ctx.fillRect(ix * width / cols, iy * height / rows, width / cols + 1, height / rows + 1); } }
-  const x = data.longitude / 180 * width; ctx.strokeStyle = "#f4bf75"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); ctx.fillStyle = "#aab5bd"; ctx.font = "12px system-ui"; ctx.fillText("synthetic longitude-velocity ridge", 12, 22);
-}
-function plotFrequency(data) {
-  const { ctx, width, height } = setup(document.getElementById("frequencyCanvas")); drawAxes(ctx, width, height, "receiver frequency", "cosmological redshift");
-  const pad = { left: 52, right: 18, top: 22, bottom: 42 }; const x0 = pad.left; const x1 = width - pad.right; const y = height / 2; const maxShift = REST_FREQ_MHZ - REST_FREQ_MHZ / 1.25; const shift = REST_FREQ_MHZ - data.observedFreq; const xObs = x0 + (shift / maxShift) * (x1 - x0);
-  ctx.strokeStyle = "rgba(255,255,255,.22)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.fillStyle = "#83e6a2"; ctx.beginPath(); ctx.arc(xObs, y, 8, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#aab5bd"; ctx.font = "12px system-ui"; ctx.fillText(`${REST_FREQ_MHZ.toFixed(4)} MHz rest`, x0, y - 24); ctx.fillText(`${data.observedFreq.toFixed(4)} MHz observed`, Math.min(xObs + 14, width - 190), y + 32);
-  ctx.fillText(`z=${data.redshift.toFixed(3)}: radio=${data.conventions.radio.toFixed(0)}, optical=${data.conventions.optical.toFixed(0)}, relativistic=${data.conventions.relativistic.toFixed(0)} km/s`, pad.left, height - 14);
-}
-function plotRotationDiagnostic(data) {
-  const { ctx, width, height } = setup(document.getElementById("rotationCanvas")); drawAxes(ctx, width, height, "v tangent (km/s)", "R tangent (kpc)");
-  const pad = { left: 52, right: 18, top: 22, bottom: 40 }; const px = (x) => pad.left + x / R0_KPC * (width - pad.left - pad.right); const py = (y) => height - pad.bottom - y / data.rotationSpeed * (height - pad.top - pad.bottom);
-  ctx.strokeStyle = "#66d9ef"; ctx.lineWidth = 2.4; ctx.beginPath(); for (let l = 5, i = 0; l <= 88; l += 1, i += 1) { const tp = tangentPoint(l, data.rotationSpeed); if (i === 0) ctx.moveTo(px(tp.radius), py(tp.velocity)); else ctx.lineTo(px(tp.radius), py(tp.velocity)); } ctx.stroke();
-  if (data.tangent.velocity !== null) { ctx.fillStyle = "#f4bf75"; ctx.beginPath(); ctx.arc(px(data.tangent.radius), py(data.tangent.velocity), 6, 0, Math.PI * 2); ctx.fill(); }
-}
-function updateLabels(data) {
-  out.redshift.textContent = data.redshift.toFixed(3); out.longitude.textContent = `${data.longitude.toFixed(0)} deg`; out.rotation.textContent = `${data.rotationSpeed.toFixed(0)} km/s`; out.spin.textContent = `${data.spinTemperature.toFixed(0)} K`; out.tau.textContent = data.tauPeak.toFixed(3); out.sigma.textContent = `${data.sigmaVelocity.toFixed(1)} km/s`; out.continuum.textContent = `${data.continuum.toFixed(2)} K`; out.observedFrequency.textContent = `${data.observedFreq.toFixed(3)} MHz`; out.velocity.textContent = `radio ${data.conventions.radio.toFixed(0)} km/s`; out.columnDensity.textContent = data.columnSlab.toExponential(2).replace("e+", "e+"); out.tangentRadius.textContent = `${data.tangent.radius.toFixed(2)} kpc`; out.tangentVelocity.textContent = data.tangent.velocity === null ? "not inner Galaxy" : `${data.tangent.velocity.toFixed(1)} km/s`; out.tangentFrequency.textContent = data.tangent.frequency === null ? "n/a" : `${data.tangent.frequency.toFixed(3)} MHz`; out.peakChannels.textContent = String(data.components.length);
-}
-function updateDataStatus() {
-  if (!observedSpectrum) { dataStatus.className = "data-status"; dataStatus.textContent = "Synthetic model only. No observed spectrum is loaded."; return; }
-  const source = sourceLabelInput.value.trim() || "source citation not supplied";
-  const meta = observedSpectrum.metadata || {};
-  const importInfo = meta.format ? ` Parser: ${meta.format}; axis ${meta.axisType}; input unit ${meta.inputVelocityUnit || meta.velocityUnit}; T unit ${meta.bunit}; frame ${meta.frame}.` : "";
-  dataStatus.className = "data-status loaded";
-  dataStatus.textContent = `Imported overlay: ${observedSpectrum.points.length} channels from ${observedSpectrum.filename}. Provenance: ${source}.${importInfo} Displayed N_HI uses the optically-thin emission conversion only; no optical-depth correction, distance, or 3D placement is inferred.`;
-}
-function render() {
-  const data = model(); latestSpectrum = data.points; updateLabels(data); updateDataStatus(); plotSpectrum(data); plotGalaxy(data); plotLongitudeVelocity(data); plotFrequency(data); plotRotationDiagnostic(data);
-}
-function exportSpectrum() { const rows = ["velocity_km_s,brightness_temperature_K,optically_thin_brightness_K,optical_depth"]; latestSpectrum.forEach((p) => rows.push(`${p.velocity.toFixed(6)},${p.brightness.toFixed(6)},${p.thinBrightness.toFixed(6)},${p.tau.toFixed(8)}`)); const blob = new Blob([rows.join("\n")], { type: "text/csv" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "synthetic_21cm_spectrum.csv"; link.click(); URL.revokeObjectURL(url); }
-async function importObservedFile(file) {
-  if (!file) return;
-  try {
-    observedSpectrum = await parseObservedFile(file);
-    render();
-    window.dispatchEvent(new CustomEvent("hi21:import-change", { detail: { loaded: true, format: observedSpectrum.metadata?.format || "CSV" } }));
-  } catch (error) {
-    observedSpectrum = null;
-    dataStatus.className = "data-status error";
-    dataStatus.textContent = `Import rejected: ${error instanceof Error ? error.message : "unknown import error"}`;
-    window.dispatchEvent(new CustomEvent("hi21:import-change", { detail: { loaded: false } }));
+    begin() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = this.canvas.getBoundingClientRect();
+      const width = Math.max(20, Math.round(rect.width));
+      const height = Math.max(20, Math.round(rect.height));
+      this.canvas.width = Math.round(width * ratio);
+      this.canvas.height = Math.round(height * ratio);
+      this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      this.ctx.fillStyle = "#080d16";
+      this.ctx.fillRect(0, 0, width, height);
+      return { ctx: this.ctx, width, height };
+    }
   }
-}
-observedFileInput.addEventListener("change", () => importObservedFile(observedFileInput.files?.[0]));
-if (dropZone) {
-  ["dragenter", "dragover"].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.add("is-dragover"); }));
-  ["dragleave", "drop"].forEach((eventName) => dropZone.addEventListener(eventName, (event) => { event.preventDefault(); dropZone.classList.remove("is-dragover"); }));
-  dropZone.addEventListener("drop", (event) => importObservedFile(event.dataTransfer?.files?.[0]));
-}
-document.getElementById("clearObservedButton").addEventListener("click", () => { observedSpectrum = null; observedFileInput.value = ""; sourceLabelInput.value = ""; render(); window.dispatchEvent(new CustomEvent("hi21:import-change", { detail: { loaded: false } })); });
-sourceLabelInput.addEventListener("input", () => { if (observedSpectrum) { updateDataStatus(); window.dispatchEvent(new CustomEvent("hi21:import-change", { detail: { loaded: true } })); } });
-document.querySelectorAll("[data-scroll-target]").forEach((button) => button.addEventListener("click", () => {
-  const target = document.getElementById(button.dataset.scrollTarget);
-  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-  document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
-}));
-ids.forEach((id) => inputs[id].addEventListener("input", render));
-document.getElementById("exportButton").addEventListener("click", exportSpectrum);
-window.addEventListener("resize", render);
-render();
+
+  const surfaces = {
+    galaxy: new Surface("galaxy"),
+    spectrum: new Surface("spectrum"),
+    lv: new Surface("longitude-velocity"),
+  };
+  const state = {
+    worker: null,
+    timeout: 0,
+    products: null,
+    logs: [],
+    frames: 0,
+    frameStart: performance.now(),
+    skyImage: null,
+  };
+
+  function value(id) {
+    if (controls[id].type === "checkbox") return controls[id].checked;
+    return controls[id].type === "select-one" ? controls[id].value : Number(controls[id].value);
+  }
+
+  function parameters() {
+    return Object.fromEntries(Object.keys(defaults).map((key) => [key, value(key)]));
+  }
+
+  function labels() {
+    const curve = { flat: "FLAT", rising: "RISING", declining: "DECLINING" };
+    const overlay = value("modelOverlay");
+    document.getElementById("modelOverlay-value").textContent = overlay ? "ON" : "OFF";
+    document.getElementById("longitude-value").textContent = `${value("longitude").toFixed(1)} deg`;
+    document.getElementById("pathLength-value").textContent = `${value("pathLength").toFixed(1)} kpc`;
+    document.getElementById("velocityDispersion-value").textContent = `${value("velocityDispersion").toFixed(1)} km/s`;
+    document.getElementById("rotationModel-value").textContent = curve[value("rotationModel")];
+    document.getElementById("solarRadius-value").textContent = `${value("solarRadius").toFixed(2)} kpc`;
+    document.getElementById("localSpeed-value").textContent = `${value("localSpeed").toFixed(1)} km/s`;
+    document.getElementById("diskScale-value").textContent = `${value("diskScale").toFixed(2)} kpc`;
+    document.getElementById("spiralContrast-value").textContent = value("spiralContrast").toFixed(2);
+    document.getElementById("brightnessScale-value").textContent = `${value("brightnessScale").toFixed(0)} K/kpc`;
+    document.querySelectorAll(".model-parameters").forEach((section) => {
+      section.classList.toggle("active", overlay);
+    });
+  }
+
+  function engine(name, className, text) {
+    readout.engine.textContent = name;
+    readout.engineLight.className = className;
+    readout.status.textContent = text;
+  }
+
+  function log(message) {
+    state.logs.unshift(`${new Date().toISOString().slice(11, 19)}  ${message}`);
+    state.logs.length = Math.min(state.logs.length, 7);
+    readout.log.replaceChildren(...state.logs.map((line) => {
+      const row = document.createElement("li");
+      row.textContent = line;
+      return row;
+    }));
+  }
+
+  function configure(immediate = false) {
+    labels();
+    if (!state.worker) return;
+    clearTimeout(state.timeout);
+    const send = () => {
+      engine("LOADING", "busy", "READING LAB DATA AND SOLVING OVERLAY");
+      state.worker.postMessage({ type: "configure", parameters: parameters() });
+    };
+    if (immediate) send(); else state.timeout = setTimeout(send, 45);
+  }
+
+  function setLongitude() {
+    labels();
+    if (state.worker && state.products) {
+      state.worker.postMessage({ type: "setLongitude", longitude: value("longitude") });
+    } else {
+      configure(true);
+    }
+  }
+
+  function rgbaCanvas(bytes, width, height) {
+    const buffer = document.createElement("canvas");
+    buffer.width = width;
+    buffer.height = height;
+    buffer.getContext("2d").putImageData(new ImageData(bytes, width, height), 0, 0);
+    return buffer;
+  }
+
+  function drawSky(products) {
+    const { ctx, width, height } = surfaces.galaxy.begin();
+    if (!state.skyImage) {
+      ctx.fillStyle = "#8196ad";
+      ctx.font = '11px "Roboto Mono", Consolas, monospace';
+      ctx.fillText("LOADING HI4PI OBSERVED SKY...", 18, height / 2);
+      return;
+    }
+    const marginX = 14;
+    const marginY = 28;
+    const scale = Math.min(
+      (width - marginX * 2) / state.skyImage.naturalWidth,
+      (height - marginY * 2) / state.skyImage.naturalHeight
+    );
+    const drawWidth = state.skyImage.naturalWidth * scale;
+    const drawHeight = state.skyImage.naturalHeight * scale;
+    const left = (width - drawWidth) / 2;
+    const top = (height - drawHeight) / 2;
+    surfaces.galaxy.geometry = { left, top, width: drawWidth, height: drawHeight };
+    ctx.drawImage(state.skyImage, left, top, drawWidth, drawHeight);
+    ctx.strokeStyle = "rgba(73,223,160,.55)";
+    ctx.strokeRect(left - 1, top - 1, drawWidth + 2, drawHeight + 2);
+    const longitude = products.telemetry.longitudeDegrees;
+    const markerX = left + (0.5 - longitude / 360) * drawWidth;
+    const markerY = top + drawHeight * 0.5;
+    ctx.strokeStyle = "#ffbd59";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(markerX, top + drawHeight * 0.18);
+    ctx.lineTo(markerX, top + drawHeight * 0.82);
+    ctx.stroke();
+    ctx.fillStyle = "#ffbd59";
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#e8f0f7";
+    ctx.font = '10px "Roboto Mono", Consolas, monospace';
+    ctx.fillText(`l=${longitude.toFixed(1)} deg`, Math.min(markerX + 6, width - 80), Math.max(top + 13, markerY - 8));
+    ctx.fillStyle = "#8196ad";
+    ctx.fillText("HI4PI / OBSERVED SKY PROJECTION", left + 6, top + drawHeight + 16);
+  }
+
+  function axes(ctx, width, height, xLabel, yLabel) {
+    const box = { left: 60, top: 15, w: width - 77, h: height - 44 };
+    ctx.strokeStyle = "rgba(129,150,173,.25)";
+    for (let tick = 0; tick <= 4; tick += 1) {
+      const y = box.top + box.h * tick / 4;
+      ctx.beginPath();
+      ctx.moveTo(box.left, y);
+      ctx.lineTo(box.left + box.w, y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#8196ad";
+    ctx.font = '10px "Roboto Mono", Consolas, monospace';
+    ctx.fillText(yLabel, 10, box.top + 8);
+    ctx.textAlign = "right";
+    ctx.fillText(xLabel, width - 12, height - 8);
+    ctx.textAlign = "left";
+    return box;
+  }
+
+  function plotLine(ctx, data, maximum, box, colour, lineWidth) {
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    for (let index = 0; index < data.velocity.length; index += 1) {
+      const x = box.left + (data.velocity[index] + 300) / 600 * box.w;
+      const y = box.top + (1 - data.brightness[index] / maximum) * box.h;
+      if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function drawSpectrum(products) {
+    const { ctx, width, height } = surfaces.spectrum.begin();
+    const observed = products.observedSpectrum;
+    let maximum = 1;
+    for (const item of observed.brightness) maximum = Math.max(maximum, item);
+    if (products.modelSpectrum) {
+      for (const item of products.modelSpectrum.brightness) maximum = Math.max(maximum, item);
+    }
+    const box = axes(ctx, width, height, "V_LSR (km/s)", "T_B K");
+    ctx.fillStyle = "#8196ad";
+    ctx.font = '10px "Roboto Mono", Consolas, monospace';
+    for (let tick = 0; tick <= 4; tick += 1) {
+      const velocity = -300 + tick * 150;
+      const x = box.left + tick / 4 * box.w;
+      ctx.textAlign = tick === 0 ? "left" : tick === 4 ? "right" : "center";
+      ctx.fillText(velocity.toFixed(0), x, box.top + box.h + 17);
+      ctx.textAlign = "right";
+      ctx.fillText((maximum * (1 - tick / 4)).toFixed(1), box.left - 8, box.top + tick / 4 * box.h + 3);
+    }
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(52,215,229,.14)";
+    ctx.beginPath();
+    ctx.moveTo(box.left, box.top + box.h);
+    for (let index = 0; index < observed.velocity.length; index += 1) {
+      const x = box.left + (observed.velocity[index] + 300) / 600 * box.w;
+      const y = box.top + (1 - observed.brightness[index] / maximum) * box.h;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(box.left + box.w, box.top + box.h);
+    ctx.closePath();
+    ctx.fill();
+    plotLine(ctx, observed, maximum, box, "#34d7e5", 1.7);
+    ctx.fillStyle = "#34d7e5";
+    ctx.fillText("LAB OBSERVED", box.left + 8, box.top + 14);
+    if (products.modelSpectrum) {
+      plotLine(ctx, products.modelSpectrum, maximum, box, "#ffbd59", 1.35);
+      ctx.fillStyle = "#ffbd59";
+      ctx.fillText("MODEL OVERLAY", box.left + 98, box.top + 14);
+    }
+  }
+
+  function drawLongitudeVelocity(products) {
+    const { ctx, width, height } = surfaces.lv.begin();
+    const box = axes(ctx, width, height, "GALACTIC LONGITUDE (deg)", "V_LSR");
+    const image = products.longitudeVelocity;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(rgbaCanvas(image.rgba, image.width, image.height), box.left, box.top, box.w, box.h);
+    ctx.imageSmoothingEnabled = true;
+    const x = box.left + (products.telemetry.longitudeDegrees + 180) / 360 * box.w;
+    ctx.strokeStyle = "#f6fbff";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, box.top);
+    ctx.lineTo(x, box.top + box.h);
+    ctx.stroke();
+    ctx.fillStyle = "#8196ad";
+    ctx.font = '10px "Roboto Mono", Consolas, monospace';
+    ctx.textAlign = "left";
+    ctx.fillText("-180", box.left, box.top + box.h + 17);
+    ctx.textAlign = "center";
+    ctx.fillText("0", box.left + box.w / 2, box.top + box.h + 17);
+    ctx.textAlign = "right";
+    ctx.fillText("+180", box.left + box.w, box.top + box.h + 17);
+    ctx.textAlign = "left";
+  }
+
+  function showComponents(products) {
+    if (!products.modelComponents.length) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 4;
+      cell.className = "empty";
+      cell.textContent = "ENABLE MODEL OVERLAY FOR COMPUTED CELLS";
+      row.appendChild(cell);
+      readout.components.replaceChildren(row);
+      return;
+    }
+    readout.components.replaceChildren(...products.modelComponents.map((component) => {
+      const row = document.createElement("tr");
+      [
+        component.distanceKpc.toFixed(2),
+        component.radiusKpc.toFixed(2),
+        component.radialVelocityKmS.toFixed(1),
+        component.weightKelvin.toFixed(3),
+      ].forEach((numberText) => {
+        const cell = document.createElement("td");
+        cell.textContent = numberText;
+        row.appendChild(cell);
+      });
+      return row;
+    }));
+  }
+
+  function updateProducts(products) {
+    state.products = products;
+    const telemetry = products.telemetry;
+    controls.longitude.value = String(telemetry.longitudeDegrees);
+    labels();
+    readout.longitudeLive.textContent = `${telemetry.longitudeDegrees.toFixed(2)} deg`;
+    readout.peakTemperature.textContent = `${telemetry.peakBrightnessKelvin.toFixed(2)} K`;
+    readout.peakVelocity.textContent = `${telemetry.peakVelocityKmS.toFixed(2)} km/s`;
+    readout.peakFrequency.textContent = `${telemetry.peakFrequencyMHz.toFixed(5)} MHz`;
+    readout.velocityRange.textContent =
+      `${telemetry.velocityMinimumKmS.toFixed(1)} / ${telemetry.velocityMaximumKmS.toFixed(1)} km/s`;
+    readout.compute.textContent = `${telemetry.computeMilliseconds.toFixed(2)} ms`;
+    readout.spectrumNote.textContent =
+      `LAB l=${telemetry.longitudeDegrees.toFixed(2)} deg / integral ${telemetry.integratedBrightnessKkms.toFixed(1)} K km/s`;
+    showComponents(products);
+    drawSky(products);
+    drawSpectrum(products);
+    drawLongitudeVelocity(products);
+    engine("ONLINE", "online", products.modelSpectrum ? "LAB DATA + MODEL OVERLAY CURRENT" : "LAB OBSERVATIONS CURRENT");
+  }
+
+  function loadSkyImage() {
+    const image = new Image();
+    image.onload = () => {
+      state.skyImage = image;
+      if (state.products) drawSky(state.products);
+      log("HI4PI observed all-sky image loaded");
+    };
+    image.onerror = () => log("HI4PI image asset could not be loaded");
+    image.src = "data/observations/hi4pi_allsky.jpg";
+  }
+
+  function start() {
+    labels();
+    loadSkyImage();
+    try {
+      state.worker = new Worker("assets/js/physicsWorker.js");
+      state.worker.addEventListener("message", (event) => {
+        if (event.data.type === "products") {
+          updateProducts(event.data);
+        } else if (event.data.type === "csv") {
+          const url = URL.createObjectURL(new Blob([event.data.content], { type: "text/csv;charset=utf-8" }));
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = event.data.filename;
+          link.click();
+          URL.revokeObjectURL(url);
+          log(`Exported ${event.data.rows} LAB spectral channels`);
+        } else if (event.data.type === "dataError") {
+          engine("FAILED", "failed", "LAB DATASET LOAD FAILED");
+          log(event.data.message);
+        }
+      });
+      state.worker.addEventListener("error", (event) => {
+        engine("FAILED", "failed", "WORKER FAILURE");
+        log(event.message);
+      });
+      configure(true);
+      log("Loading LAB observational spectra");
+    } catch (error) {
+      engine("FAILED", "failed", "SERVE OVER HTTP TO START WORKER");
+      log(error.message);
+    }
+    const animate = (timestamp) => {
+      state.frames += 1;
+      if (timestamp - state.frameStart >= 1000) {
+        readout.fps.textContent = `${(state.frames * 1000 / (timestamp - state.frameStart)).toFixed(0)} FPS`;
+        state.frames = 0;
+        state.frameStart = timestamp;
+      }
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  controls.longitude.addEventListener("input", setLongitude);
+  controls.longitude.addEventListener("change", setLongitude);
+  Object.entries(controls).filter(([id]) => id !== "longitude").forEach(([, control]) => {
+    control.addEventListener("input", () => configure(false));
+    control.addEventListener("change", () => configure(true));
+  });
+  surfaces.galaxy.canvas.addEventListener("click", (event) => {
+    if (!surfaces.galaxy.geometry || !state.worker) return;
+    const bounds = surfaces.galaxy.canvas.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
+    const geometry = surfaces.galaxy.geometry;
+    if (x >= geometry.left && x <= geometry.left + geometry.width) {
+      const longitude = Math.max(-180, Math.min(180, (0.5 - (x - geometry.left) / geometry.width) * 360));
+      controls.longitude.value = longitude.toFixed(1);
+      setLongitude();
+      log("Galactic longitude selected on HI4PI sky projection");
+    }
+  });
+  buttons.export.addEventListener("click", () => state.worker?.postMessage({ type: "exportSpectrum" }));
+  buttons.reset.addEventListener("click", () => {
+    for (const [key, defaultValue] of Object.entries(defaults)) {
+      if (controls[key].type === "checkbox") controls[key].checked = defaultValue;
+      else controls[key].value = String(defaultValue);
+    }
+    configure(true);
+    log("Observed view and model settings restored");
+  });
+  window.addEventListener("resize", () => {
+    if (state.products) updateProducts(state.products);
+  });
+  start();
+})();

@@ -1,0 +1,9 @@
+{
+  "dataset": "HI4PI full-sky H I survey",
+  "product": "Official public all-sky visualisation of H I line emission",
+  "imageFile": "hi4pi_allsky.jpg",
+  "sourcePage": "https://www.mpifr-bonn.mpg.de/pressreleases/2016/13",
+  "credit": "HI4PI Collaboration",
+  "citation": "HI4PI Collaboration, 2016. HI4PI: A full-sky HI survey based on EBHIS and GASS. Astronomy & Astrophysics, 594, A116.",
+  "interpretation": "This is an observed sky projection from the Solar position, not a face-on map of the Galactic disk."
+}

@@ -1,133 +1,99 @@
-"""Generate a synthetic neutral hydrogen 21 cm spectrum."""
+"""Generate a Galactic-rotation synthetic neutral-hydrogen 21 cm spectrum."""
 
 from __future__ import annotations
 
 import csv
 import math
+from dataclasses import dataclass
 from pathlib import Path
 
-REST_FREQ_MHZ = 1420.40575177
-C_KM_S = 299792.458
-COLUMN_FACTOR = 1.823e18
-R0_KPC = 8.2
-SPECTRUM_SAMPLES = 520
-VELOCITY_SPAN_KM_S = 360.0
+REST_FREQUENCY_MHZ = 1420.40575177
+SPEED_OF_LIGHT_KM_S = 299792.458
 
 
-def observed_frequency(redshift: float) -> float:
-    """Cosmological frequency relation, not a local velocity conversion."""
-    return REST_FREQ_MHZ / (1.0 + redshift)
+@dataclass(frozen=True)
+class Galaxy:
+    longitude_degrees: float = 32.0
+    path_length_kpc: float = 24.0
+    solar_radius_kpc: float = 8.2
+    local_speed_km_s: float = 236.0
+    disk_scale_kpc: float = 3.5
+    spiral_contrast: float = 0.55
+    velocity_dispersion_km_s: float = 7.0
+    brightness_k_per_kpc: float = 38.0
 
 
-def radio_frequency_from_velocity(velocity_km_s: float) -> float:
-    """Radio spectral-coordinate frequency for a local line-of-sight velocity label."""
-    return REST_FREQ_MHZ * (1.0 - velocity_km_s / C_KM_S)
+def rotation_speed(radius_kpc: float, galaxy: Galaxy) -> float:
+    return galaxy.local_speed_km_s
 
 
-def velocity_conventions(redshift: float) -> dict[str, float]:
-    """Radio, optical and relativistic coordinates for one spectral redshift."""
-    return {
-        "radio_km_s": C_KM_S * redshift / (1.0 + redshift),
-        "optical_km_s": C_KM_S * redshift,
-        "relativistic_km_s": C_KM_S * (((1.0 + redshift) ** 2 - 1.0) / ((1.0 + redshift) ** 2 + 1.0)),
-    }
+def radial_velocity(radius_kpc: float, longitude_radians: float, galaxy: Galaxy) -> float:
+    if radius_kpc < 0.04:
+        return 0.0
+    return (
+        rotation_speed(radius_kpc, galaxy) * galaxy.solar_radius_kpc / radius_kpc
+        - galaxy.local_speed_km_s
+    ) * math.sin(longitude_radians)
 
 
-def galactic_components(longitude_deg: float, theta0: float, tau_peak: float) -> list[dict[str, float]]:
-    longitude = math.radians(longitude_deg)
-    sin_l = max(0.05, math.sin(longitude))
-    tangent_velocity = theta0 * (1.0 - sin_l)
-    local_arm = 8.0 * math.sin(2.0 * longitude)
-    perseus_arm = -45.0 * math.sin(longitude) if longitude_deg < 95.0 else -25.0 * math.sin(longitude)
-    inner_arm = tangent_velocity if longitude_deg < 90.0 else -0.35 * theta0 * math.sin(longitude)
-    return [
-        {"name": "local gas", "velocity_km_s": local_arm, "tau": tau_peak * 0.85, "width_scale": 1.1, "radius_kpc": R0_KPC},
-        {"name": "inner/tangent gas", "velocity_km_s": inner_arm, "tau": tau_peak * (1.25 if longitude_deg < 90.0 else 0.45), "width_scale": 0.85, "radius_kpc": max(R0_KPC * sin_l, 2.2)},
-        {"name": "outer arm", "velocity_km_s": perseus_arm, "tau": tau_peak * 0.55, "width_scale": 1.35, "radius_kpc": 10.8},
-    ]
+def doppler_frequency(velocity_km_s: float) -> float:
+    return REST_FREQUENCY_MHZ * (1.0 - velocity_km_s / SPEED_OF_LIGHT_KM_S)
 
 
-def tangent_point(longitude_deg: float, theta0: float) -> dict[str, float | None]:
-    longitude = math.radians(longitude_deg)
-    radius = R0_KPC * abs(math.sin(longitude))
-    if 0.0 < longitude_deg < 90.0:
-        velocity = theta0 * (1.0 - abs(math.sin(longitude)))
-        frequency = radio_frequency_from_velocity(velocity)
-    else:
-        velocity = None
-        frequency = None
-    return {"longitude_deg": longitude_deg, "radius_kpc": radius, "velocity_km_s": velocity, "frequency_mhz": frequency}
+def density(x_kpc: float, y_kpc: float, galaxy: Galaxy) -> float:
+    radius = math.hypot(x_kpc, y_kpc)
+    radial = math.exp(-(radius - galaxy.solar_radius_kpc) / galaxy.disk_scale_kpc)
+    central_hole = 1.0 - math.exp(-(radius / 2.4) ** 2)
+    theta = math.atan2(y_kpc, x_kpc)
+    phase = 2.0 * (theta - math.log(max(radius, 0.3) / galaxy.solar_radius_kpc) / math.tan(0.22))
+    arms = 1.0 + galaxy.spiral_contrast * ((1.0 + math.cos(phase)) / 2.0) ** 3
+    return max(0.0, radial * central_hole * arms)
 
 
-def integrate_columns(rows: list[dict[str, float]], spin_temperature: float) -> dict[str, float]:
-    """Return thin and uniform-slab NHI estimates for the synthetic rows."""
-    thin_integral = 0.0
-    tau_integral = 0.0
-    for previous, current in zip(rows, rows[1:]):
-        dv = current["velocity_km_s"] - previous["velocity_km_s"]
-        thin_integral += 0.5 * (current["brightness_temperature_K"] + previous["brightness_temperature_K"]) * dv
-        tau_integral += 0.5 * (current["optical_depth"] + previous["optical_depth"]) * dv
-    return {
-        "thin_cm2": COLUMN_FACTOR * thin_integral,
-        "uniform_slab_cm2": COLUMN_FACTOR * spin_temperature * tau_integral,
-    }
-
-
-def generate_spectrum(
-    spin_temperature: float = 120.0,
-    continuum: float = 2.73,
-    tau_peak: float = 0.12,
-    sigma_velocity: float = 9.0,
-    longitude_deg: float = 35.0,
-    theta0: float = 220.0,
-    samples: int = SPECTRUM_SAMPLES,
-) -> tuple[list[dict[str, float]], float]:
-    """Return synthetic spectrum rows and the optically-thin NHI estimate."""
-    components = galactic_components(longitude_deg, theta0, tau_peak)
-    rows: list[dict[str, float]] = []
-
-    for index in range(samples):
-        velocity = -VELOCITY_SPAN_KM_S / 2.0 + VELOCITY_SPAN_KM_S * index / (samples - 1)
-        tau = 0.0
-        for component in components:
-            sigma = sigma_velocity * component["width_scale"]
-            tau += component["tau"] * math.exp(-0.5 * ((velocity - component["velocity_km_s"]) / sigma) ** 2)
-        brightness = (spin_temperature - continuum) * (1.0 - math.exp(-tau))
-        thin_brightness = (spin_temperature - continuum) * tau
-        rows.append(
-            {
-                "velocity_km_s": velocity,
-                "brightness_temperature_K": brightness,
-                "optically_thin_brightness_K": thin_brightness,
-                "optical_depth": tau,
-            }
+def generate_spectrum(galaxy: Galaxy = Galaxy(), bins: int = 512) -> list[dict[str, float]]:
+    velocities = [-300.0 + index * 600.0 / (bins - 1) for index in range(bins)]
+    brightness = [0.0] * bins
+    longitude = math.radians(galaxy.longitude_degrees)
+    path_steps = 180
+    distance_step = galaxy.path_length_kpc / path_steps
+    for index in range(path_steps):
+        distance = (index + 0.5) * distance_step
+        x = galaxy.solar_radius_kpc - distance * math.cos(longitude)
+        y = distance * math.sin(longitude)
+        radius = math.hypot(x, y)
+        centre_velocity = radial_velocity(radius, longitude, galaxy)
+        weight = (
+            density(x, y, galaxy)
+            * galaxy.brightness_k_per_kpc
+            * distance_step
+            / (math.sqrt(2.0 * math.pi) * galaxy.velocity_dispersion_km_s)
         )
-
-    estimates = integrate_columns(rows, spin_temperature)
-    return rows, estimates["thin_cm2"]
+        for bin_index, velocity in enumerate(velocities):
+            brightness[bin_index] += weight * math.exp(
+                -0.5 * ((velocity - centre_velocity) / galaxy.velocity_dispersion_km_s) ** 2
+            )
+    return [
+        {
+            "velocity_lsr_km_s": velocity,
+            "frequency_mhz": doppler_frequency(velocity),
+            "brightness_temperature_k": brightness[index],
+        }
+        for index, velocity in enumerate(velocities)
+    ]
 
 
 def main() -> None:
     output = Path(__file__).resolve().parents[1] / "data" / "synthetic_21cm_spectrum.csv"
-    output.parent.mkdir(exist_ok=True)
-    spin_temperature = 120.0
-    rows, column_thin = generate_spectrum(spin_temperature=spin_temperature)
-    estimates = integrate_columns(rows, spin_temperature)
+    rows = generate_spectrum()
     with output.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["velocity_km_s", "brightness_temperature_K", "optically_thin_brightness_K", "optical_depth"])
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"Wrote {output}")
-    print(f"N_HI thin = {column_thin:.3e} cm^-2")
-    print(f"N_HI uniform slab = {estimates['uniform_slab_cm2']:.3e} cm^-2")
-
-    rotation_output = Path(__file__).resolve().parents[1] / "data" / "tangent_point_table.csv"
-    with rotation_output.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["longitude_deg", "radius_kpc", "velocity_km_s", "frequency_mhz"])
-        writer.writeheader()
-        for longitude in range(5, 90):
-            writer.writerow(tangent_point(float(longitude), 220.0))
-    print(f"Wrote {rotation_output}")
+    peak = max(rows, key=lambda row: row["brightness_temperature_k"])
+    print(
+        f"Wrote {len(rows)} channels to {output}; peak at "
+        f"{peak['velocity_lsr_km_s']:.2f} km/s ({peak['frequency_mhz']:.6f} MHz)"
+    )
 
 
 if __name__ == "__main__":

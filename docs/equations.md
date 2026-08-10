@@ -1,87 +1,46 @@
-# Equations and Assumptions
+# Galactic H I Data And Kernel Equations
 
-## Rest Frequency
+## Observed Product
 
-The neutral hydrogen hyperfine transition has rest frequency:
-
-```text
-nu_0 = 1420.40575177 MHz
-```
-
-## Redshifted Frequency
-
-For cosmological redshift:
+The primary spectrum and longitude-velocity view are measurements from the Leiden/Argentine/Bonn
+(LAB) survey. Profiles queried at `b = 0 deg` and `0.60 deg` FWHM are stored at 5-degree
+longitude intervals. Since the native LSR-calibrated channels vary slightly between extracted
+profiles, the browser display dataset is linearly resampled to:
 
 ```text
-nu_obs = nu_0 / (1 + z)
+v_LSR = -300, -299, ..., +300 km/s
 ```
 
-## Radio Velocity Convention
+No rotation curve is needed to display those measured brightness temperatures.
 
-The lab uses the radio convention:
+## Optional Model Overlay
+
+The hyperfine rest transition is:
 
 ```text
-v_radio = c (nu_0 - nu_obs) / nu_0
+nu0 = 1420.40575177 MHz
 ```
 
-This is not the same as the optical or relativistic velocity convention.
-
-## Optical Depth Profile
-
-The synthetic line uses a Gaussian optical-depth profile:
+For a non-relativistic radial velocity in the local standard of rest:
 
 ```text
-tau(v) = tau_0 exp[-0.5 (v / sigma_v)^2]
+nu = nu0 (1 - vr / c)
 ```
 
-## Brightness Temperature
-
-The simplified slab brightness against a continuum background is:
+The planar circular Galactic model locates the Sun at radius `R0` with circular speed `V0`.
+For neutral gas on a circular orbit at radius `R`, observed at longitude `l`:
 
 ```text
-T_B(v) = (T_s - T_c) [1 - exp(-tau(v))]
+vr(R,l) = [v(R) R0/R - V0] sin(l)
 ```
 
-For optically thin emission:
+When the simulation overlay is enabled, the worker evaluates this velocity along a sightline
+through an exponential disk with a smooth two-arm emissivity modulation and adds each gas parcel
+as a Gaussian velocity component:
 
 ```text
-T_B(v) ~= (T_s - T_c) tau(v)
+TB(v) = sum_s epsilon(s) exp[-(v - vr(s))^2 / (2 sigma_v^2)]
 ```
 
-## H I Column Density
-
-For optically thin H I emission:
-
-```text
-N_HI = 1.823e18 integral T_B(v) dv   cm^-2
-```
-
-where `T_B` is measured in kelvin and `dv` in km/s.
-
-## Galactic Rotation Motivation
-
-For circular rotation in the Galactic plane, the standard line-of-sight velocity form is:
-
-```text
-v_los = [Theta(R) R0/R - Theta0] sin(l)
-```
-
-where `R0` and `Theta0` are the Sun's Galactocentric radius and circular speed, `R` is the gas Galactocentric radius, and `l` is Galactic longitude.
-
-The browser uses a simplified, pedagogical multi-component approximation inspired by this relationship. It is designed to show why H I spectral peaks shift with Galactic longitude and why longitude-velocity diagrams are central to 21 cm survey analysis.
-
-## Tangent-Point Approximation
-
-For inner-Galaxy lines of sight with `0 < l < 90 deg`, the tangent-point radius is:
-
-```text
-R_t = R0 sin(l)
-```
-
-For a flat rotation curve `Theta(R) = Theta0`, the idealised terminal velocity becomes:
-
-```text
-v_t ~= Theta0 [1 - sin(l)]
-```
-
-This is used as a diagnostic curve, not as a fitted Milky Way rotation curve.
+The model spectrum is drawn in amber over the cyan LAB observation. The displayed
+longitude-velocity heatmap remains the measured LAB plane slice.

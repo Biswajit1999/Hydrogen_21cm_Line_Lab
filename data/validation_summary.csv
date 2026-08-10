@@ -1,10 +1,7 @@
 check,value,expected,passed
-zero_redshift_frequency,1420.40575177,1420.40575177,True
-redshift_decreases_frequency,True,True,True
-positive_radio_velocity_for_redshift,2968.2421584158496,> 0,True
-optically_thin_limit_error,4.999833336150061e-05,< 1e-3,True
-width_increases_column_density,1.998742395588547,> 1,True
-synthetic_rows,420,420,True
-inner_galaxy_tangent_velocity_trend,True,True,True
-tangent_radius_at_30deg,4.099999999999999,4.1,True
-positive_tangent_velocity,110.0,> 0,True
+zero_velocity_rest_frequency,1420.40575177,1420.40575177,True
+receding_doppler_shift,1420.2162332262387,< 1420.40575177,True
+centre_line_zero_velocity,0.0,0.0,True
+longitude_velocity_sign_symmetry,0.0,0.0,True
+spectrum_has_emission,20.842664340363502,> 0,True
+spectral_channel_count,512,512,True
