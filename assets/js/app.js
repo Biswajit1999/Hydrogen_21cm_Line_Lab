@@ -101,7 +101,7 @@
       this.canvas.width = Math.round(width * ratio);
       this.canvas.height = Math.round(height * ratio);
       this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      this.ctx.fillStyle = "#080d16";
+      this.ctx.fillStyle = "#171a21";
       this.ctx.fillRect(0, 0, width, height);
       return { ctx: this.ctx, width, height };
     }
@@ -196,7 +196,7 @@
   function drawSky(products) {
     const { ctx, width, height } = surfaces.galaxy.begin();
     if (!state.skyImage) {
-      ctx.fillStyle = "#8196ad";
+      ctx.fillStyle = "#8b93a3";
       ctx.font = '11px "Roboto Mono", Consolas, monospace';
       ctx.fillText("LOADING HI4PI OBSERVED SKY...", 18, height / 2);
       return;
@@ -218,20 +218,20 @@
     const longitude = products.telemetry.longitudeDegrees;
     const markerX = left + (0.5 - longitude / 360) * drawWidth;
     const markerY = top + drawHeight * 0.5;
-    ctx.strokeStyle = "#ffbd59";
+    ctx.strokeStyle = "#f2b866";
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(markerX, top + drawHeight * 0.18);
     ctx.lineTo(markerX, top + drawHeight * 0.82);
     ctx.stroke();
-    ctx.fillStyle = "#ffbd59";
+    ctx.fillStyle = "#f2b866";
     ctx.beginPath();
     ctx.arc(markerX, markerY, 3.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#e8f0f7";
+    ctx.fillStyle = "#eef1f6";
     ctx.font = '10px "Roboto Mono", Consolas, monospace';
     ctx.fillText(`l=${longitude.toFixed(1)} deg`, Math.min(markerX + 6, width - 80), Math.max(top + 13, markerY - 8));
-    ctx.fillStyle = "#8196ad";
+    ctx.fillStyle = "#8b93a3";
     ctx.fillText("HI4PI / OBSERVED SKY PROJECTION", left + 6, top + drawHeight + 16);
   }
 
@@ -245,7 +245,7 @@
       ctx.lineTo(box.left + box.w, y);
       ctx.stroke();
     }
-    ctx.fillStyle = "#8196ad";
+    ctx.fillStyle = "#8b93a3";
     ctx.font = '10px "Roboto Mono", Consolas, monospace';
     ctx.fillText(yLabel, 10, box.top + 8);
     ctx.textAlign = "right";
@@ -275,7 +275,7 @@
       for (const item of products.modelSpectrum.brightness) maximum = Math.max(maximum, item);
     }
     const box = axes(ctx, width, height, "V_LSR (km/s)", "T_B K");
-    ctx.fillStyle = "#8196ad";
+    ctx.fillStyle = "#8b93a3";
     ctx.font = '10px "Roboto Mono", Consolas, monospace';
     for (let tick = 0; tick <= 4; tick += 1) {
       const velocity = -300 + tick * 150;
@@ -297,12 +297,12 @@
     ctx.lineTo(box.left + box.w, box.top + box.h);
     ctx.closePath();
     ctx.fill();
-    plotLine(ctx, observed, maximum, box, "#34d7e5", 1.7);
-    ctx.fillStyle = "#34d7e5";
+    plotLine(ctx, observed, maximum, box, "#5fb3c9", 1.7);
+    ctx.fillStyle = "#5fb3c9";
     ctx.fillText("LAB OBSERVED", box.left + 8, box.top + 14);
     if (products.modelSpectrum) {
-      plotLine(ctx, products.modelSpectrum, maximum, box, "#ffbd59", 1.35);
-      ctx.fillStyle = "#ffbd59";
+      plotLine(ctx, products.modelSpectrum, maximum, box, "#f2b866", 1.35);
+      ctx.fillStyle = "#f2b866";
       ctx.fillText("MODEL OVERLAY", box.left + 98, box.top + 14);
     }
   }
@@ -315,13 +315,13 @@
     ctx.drawImage(rgbaCanvas(image.rgba, image.width, image.height), box.left, box.top, box.w, box.h);
     ctx.imageSmoothingEnabled = true;
     const x = box.left + (products.telemetry.longitudeDegrees + 180) / 360 * box.w;
-    ctx.strokeStyle = "#f6fbff";
+    ctx.strokeStyle = "#eef1f6";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, box.top);
     ctx.lineTo(x, box.top + box.h);
     ctx.stroke();
-    ctx.fillStyle = "#8196ad";
+    ctx.fillStyle = "#8b93a3";
     ctx.font = '10px "Roboto Mono", Consolas, monospace';
     ctx.textAlign = "left";
     ctx.fillText("-180", box.left, box.top + box.h + 17);
