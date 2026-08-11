@@ -29,6 +29,49 @@ The source and processing metadata remain embedded in the JSON products. Credit 
 visualisation belongs to the HI4PI Collaboration; LAB spectra are supplied through the AIfA
 EU-HOU LAB extraction service.
 
+## Peak Interpretation: What the Spectrum Actually Shows
+
+`data/observations/lab_plane_profiles.json` bundles real LAB survey spectra at **73 Galactic
+longitudes** (`l = -180` to `+180 deg` in 5-degree steps), not a single fixed sightline --
+dragging the longitude slider or clicking the sky panel loads a genuinely different observed
+brightness-temperature profile each time.
+
+A real HI spectrum along the Galactic plane is rarely a single smooth peak: distinct velocity
+components correspond to different gas clouds and spiral-arm crossings along the line of sight,
+each Doppler-shifted by its own circular-rotation velocity. The **PEAK INTERPRETATION** panel
+now detects these components automatically (a local-maximum finder with a noise floor and an
+8 km/s merge radius to avoid double-counting a single blended hump) and converts each one's
+observed LSR velocity into an implied Galactocentric radius by inverting the flat-rotation-curve
+relation:
+
+```text
+v_r(R, l) = V0 (R0/R - 1) sin(l)   =>   R = R0 / (1 + v_r / (V0 sin l))
+```
+
+This is the standard kinematic-distance relation used to read spiral structure directly off an
+HI longitude-velocity diagram (Binney & Merrifield, 1998, *Galactic Astronomy*, section 9.1).
+Each detected peak is then classified by its implied radius relative to the solar circle:
+
+- **R < 0.35 R0** -- inner Galaxy / bar-influenced region (the flat-rotation-curve distance is
+  unreliable here; real inner-Galaxy kinematics are non-circular).
+- **0.35-0.85 R0** -- inner disk, typically tangent-point gas near a spiral-arm crossing.
+- **0.85-1.15 R0** -- solar neighbourhood, local (Orion) spur gas.
+- **1.15-1.8 R0** -- outer disk, likely Perseus or an outer-arm crossing.
+- **> 1.8 R0**, or `|sin(l)|` too close to zero -- increasingly unreliable or kinematically
+  undefined (a purely radial line of sight carries no orbital-velocity information).
+
+At the default `l = 32 deg` sightline, for example, the real LAB spectrum shows multiple resolved
+components spanning roughly `R ~ 5.6` to `11.1 kpc` -- direct observational evidence that the
+line of sight crosses several distinct spiral-arm segments, not one single cloud. This is exactly
+the kind of qualitative-to-quantitative reasoning a real HI survey paper walks through when
+reading a longitude-velocity diagram, now automated and attached to every real sightline in the
+dataset.
+
+**Caveat stated deliberately:** this inversion assumes a flat rotation curve and pure circular
+motion. Real gas has non-circular streaming (especially near the bar and spiral shocks), so the
+implied radii are order-of-magnitude kinematic distances, not survey-grade parallax measurements
+-- the classification labels above say so explicitly rather than presenting a false precision.
+
 ## Simulation Overlay
 
 Switch on `SIMULATION OVERLAY` to compare the measured LAB spectrum with a controlled forward

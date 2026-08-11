@@ -129,11 +129,14 @@ select {
 .map, .spectrum, .lv { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
 canvas { contain: strict; display: block; height: 100%; min-height: 0; width: 100%; }
 
-.right { display: grid; gap: .75rem; grid-template-rows: minmax(18rem, .6fr) auto minmax(11rem, 1fr); min-height: 0; }
+.right { display: grid; gap: .75rem; grid-template-rows: minmax(14rem, .48fr) minmax(8rem, .34fr) auto minmax(9rem, .8fr); min-height: 0; }
 table { border-collapse: collapse; font: .74rem var(--mono); width: 100%; }
 th { color: var(--muted); font: 600 .68rem var(--sans); text-align: left; text-transform: uppercase; }
 td, th { border-bottom: 1px solid var(--line); padding: .5rem .6rem; }
 td:nth-child(n+3) { color: var(--accent); text-align: right; }
+.peaks table { table-layout: fixed; }
+.peaks td.origin { color: var(--muted); font: .72rem var(--sans); text-align: left; white-space: normal; }
+.peaks th:last-child, .peaks td.origin { width: 46%; }
 .samples td.empty { color: var(--muted); line-height: 1.7; padding: 1rem .6rem; text-align: left; }
 
 .notes p { color: var(--muted); font-size: .8rem; line-height: 1.6; margin: 0; padding: .8rem; }

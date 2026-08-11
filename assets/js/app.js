@@ -359,6 +359,37 @@
     }));
   }
 
+  function showPeakInterpretation(products) {
+    const body = document.getElementById("peak-interpretation");
+    const peaks = products.peakInterpretation || [];
+    if (!peaks.length) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 4;
+      cell.className = "empty";
+      cell.textContent = "NO DISTINCT VELOCITY COMPONENTS DETECTED ABOVE NOISE FLOOR";
+      row.appendChild(cell);
+      body.replaceChildren(row);
+      return;
+    }
+    body.replaceChildren(...peaks.map((peak) => {
+      const row = document.createElement("tr");
+      const cells = [
+        peak.velocityKmS.toFixed(1),
+        peak.brightnessK.toFixed(2),
+        peak.radiusKpc === null ? "--" : peak.radiusKpc.toFixed(2),
+        peak.classification,
+      ];
+      cells.forEach((text, columnIndex) => {
+        const cell = document.createElement("td");
+        cell.textContent = text;
+        if (columnIndex === 3) cell.className = "origin";
+        row.appendChild(cell);
+      });
+      return row;
+    }));
+  }
+
   function updateProducts(products) {
     state.products = products;
     const telemetry = products.telemetry;
@@ -374,6 +405,7 @@
     readout.spectrumNote.textContent =
       `LAB l=${telemetry.longitudeDegrees.toFixed(2)} deg / integral ${telemetry.integratedBrightnessKkms.toFixed(1)} K km/s`;
     showComponents(products);
+    showPeakInterpretation(products);
     drawSky(products);
     drawSpectrum(products);
     drawLongitudeVelocity(products);
