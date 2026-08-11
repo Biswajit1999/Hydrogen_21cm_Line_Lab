@@ -41,6 +41,17 @@
             </label>
           </fieldset>
           <fieldset>
+            <legend>IMPORT OBSERVED SPECTRUM</legend>
+            <label class="file-input">CSV: velocity_km_s, brightness_k
+              <input id="csvImport" type="file" accept=".csv,text/csv">
+            </label>
+            <p id="importStatus" class="dataset">No user spectrum loaded</p>
+            <dl id="importReadout" class="import-readout" hidden>
+              <dt>Thin-limit N(HI)</dt><dd id="importColumn">--</dd>
+              <dt>Radio / Optical / Relativistic v at peak</dt><dd id="importVelocities">--</dd>
+            </dl>
+          </fieldset>
+          <fieldset>
             <legend>OBSERVED LINE OF SIGHT</legend>
             <label>GALACTIC LONGITUDE <output id="longitude-value">32.0 deg</output>
               <input id="longitude" type="range" min="-180" max="180" step="0.1" value="32">

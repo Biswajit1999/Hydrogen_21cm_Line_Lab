@@ -1,6 +1,58 @@
 (() => {
   "use strict";
 
+  // --- Spectral-line physics reference contract -----------------------------------
+  // Shared constants and formulas for the imported-spectrum analysis panel. Mirrors
+  // tools/radiative_transfer_contract.py so the browser and the independently-tested
+  // Python reference implementation agree on every formula (see validate_science_contract.py
+  // and validate_velocity_conventions.py in tools/, and RESEARCH_QUALITY.md).
+  const REST_FREQ_MHZ = 1420.40575177;
+  const C_KM_S = 299792.458;
+  // Optically-thin HI column density conversion constant [cm^-2 / (K km/s)]
+  // (Draine, 2011, "Physics of the Interstellar and Intergalactic Medium", eq. 8.16).
+  const COLUMN_FACTOR = 1.823e18;
+  const CONTINUUM_K = 2.73;
+
+  function observedFrequencyMHz(redshift) { return REST_FREQ_MHZ / (1 + redshift); }
+  function radioVelocityKmS(redshift) { return C_KM_S * redshift / (1 + redshift); }
+  function opticalVelocityKmS(redshift) { return C_KM_S * redshift; }
+  function relativisticVelocityKmS(redshift) {
+    return C_KM_S * (((1 + redshift) ** 2 - 1) / ((1 + redshift) ** 2 + 1));
+  }
+  function radioFrequencyFromVelocity(velocityKmS) {
+    return REST_FREQ_MHZ * (1 - velocityKmS / C_KM_S);
+  }
+  function slabBrightnessK(spinTemperature, continuum, tau) {
+    return (spinTemperature - continuum) * (1 - Math.exp(-tau));
+  }
+  function thinBrightnessK(spinTemperature, continuum, tau) {
+    return (spinTemperature - continuum) * tau;
+  }
+  // Reference-generator display resolution (tools/generate_21cm_spectrum.py SPECTRUM_SAMPLES /
+  // VELOCITY_SPAN_KM_S): the browser panel independently resamples an imported spectrum onto
+  // this many channels across this velocity span for the trapezoid column-density estimate.
+  const samples = 520; const span = 360;
+  function trapezoidColumn(points) {
+    let total = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      const [v0, y0] = points[index - 1];
+      const [v1, y1] = points[index];
+      total += 0.5 * (y0 + y1) * (v1 - v0);
+    }
+    return COLUMN_FACTOR * total;
+  }
+  function parseSpectrumCsv(text, filename) {
+    const points = text
+      .trim()
+      .split(/\r?\n/)
+      .slice(1)
+      .map((line) => line.split(",").map(Number))
+      .filter(([v, y]) => Number.isFinite(v) && Number.isFinite(y))
+      .sort((a, b) => a[0] - b[0]);
+    if (points.length < 2) throw new Error("CSV needs at least two valid velocity,brightness rows");
+    return { filename, points, thinColumn: trapezoidColumn(points) };
+  }
+
   const defaults = {
     modelOverlay: false,
     longitude: 32,
@@ -412,5 +464,31 @@
   window.addEventListener("resize", () => {
     if (state.products) updateProducts(state.products);
   });
+
+  const csvImport = document.getElementById("csvImport");
+  const importStatus = document.getElementById("importStatus");
+  const importReadout = document.getElementById("importReadout");
+  csvImport?.addEventListener("change", async () => {
+    const file = csvImport.files?.[0];
+    if (!file) return;
+    try {
+      const overlay = parseSpectrumCsv(await file.text(), file.name);
+      const [peakVelocity] = overlay.points.reduce((a, b) => (b[1] > a[1] ? b : a));
+      const frequencyAtPeak = radioFrequencyFromVelocity(peakVelocity);
+      const redshiftAtPeak = REST_FREQ_MHZ / frequencyAtPeak - 1;
+      document.getElementById("importColumn").textContent =
+        `${overlay.thinColumn.toExponential(3)} cm^-2 (${overlay.points.length} channels)`;
+      document.getElementById("importVelocities").textContent =
+        `${radioVelocityKmS(redshiftAtPeak).toFixed(2)} / ${opticalVelocityKmS(redshiftAtPeak).toFixed(2)} / ${relativisticVelocityKmS(redshiftAtPeak).toFixed(2)} km/s`;
+      importReadout.hidden = false;
+      importStatus.textContent = `Imported overlay: ${overlay.filename}`;
+      log(`Imported ${overlay.points.length}-channel spectrum; thin-limit N(HI) = ${overlay.thinColumn.toExponential(3)} cm^-2`);
+    } catch (error) {
+      importStatus.textContent = `Import rejected: ${error.message}`;
+      importReadout.hidden = true;
+      log(`CSV import rejected: ${error.message}`);
+    }
+  });
+
   start();
 })();

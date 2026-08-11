@@ -1,0 +1,19 @@
+check,value,expected,passed
+zero_redshift_rest_frequency,1420.40575177000 MHz,1420.40575177000 MHz,True
+positive_redshift_lowers_frequency,1352.767383 MHz,below rest frequency,True
+velocity_convention_ordering,"{'radio_km_s': 2968.2421584158415, 'relativistic_km_s': 2982.9356991238064, 'optical_km_s': 2997.92458}",radio < relativistic < optical at z=0.01,True
+radio_velocity_inverse_-120,-119.999999999974 km/s,-120.000000000000 km/s,True
+radio_velocity_inverse_-15,-14.999999999991 km/s,-15.000000000000 km/s,True
+radio_velocity_inverse_+0,0.000000000000 km/s,0.000000000000 km/s,True
+radio_velocity_inverse_+35,35.000000000010 km/s,35.000000000000 km/s,True
+radio_velocity_inverse_+240,239.999999999996 km/s,240.000000000000 km/s,True
+optically_thin_limit,0.999995000017,slab/thin close to 1,True
+brightness_monotonic_with_tau,T_B(tau=0.30) > T_B(tau=0.10),monotonic for fixed T_s > T_c,True
+brightness_bounded_by_source_function,117.270000000000 K,T_B <= T_s - T_c,True
+thin_column_density_linear_in_tau_peak,2.000000000000,2.0 when tau_peak doubles,True
+wider_line_larger_column_density,wide/narrow=2.000000,ratio > 1,True
+opaque_slab_exceeds_thin_estimate,slab/thin=1.329913,uniform slab column greater at high optical depth,True
+synthetic_rows_are_ordered,strictly increasing velocity grid,monotonic velocity axis,True
+wide_rows_preserve_channel_count,257 rows,257 rows,True
+tangent_radius_geometry,4.100000000000 kpc,4.100000000000 kpc,True
+non_inner_galaxy_has_no_tangent_solution,None at longitude 120 deg,outside idealised inner-Galaxy tangent-point domain,True

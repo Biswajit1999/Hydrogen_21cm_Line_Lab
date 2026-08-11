@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 
-from generate_21cm_spectrum import C_KM_S, REST_FREQ_MHZ, observed_frequency, radio_frequency_from_velocity, velocity_conventions
+from radiative_transfer_contract import C_KM_S, REST_FREQ_MHZ, observed_frequency, radio_frequency_from_velocity, velocity_conventions
 
 
 def require(name: str, passed: bool, detail: str) -> None:

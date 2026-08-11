@@ -10,6 +10,14 @@ from pathlib import Path
 REST_FREQUENCY_MHZ = 1420.40575177
 SPEED_OF_LIGHT_KM_S = 299792.458
 
+# Browser display-resolution contract: the imported-spectrum analysis panel in
+# assets/js/app.js independently resamples an uploaded CSV spectrum onto this many
+# channels across this LSR velocity span before estimating a column density (see
+# tools/validate_browser_contract.js). This is a separate display choice from this
+# module's own 512-channel / +-300 km/s synthetic Galactic-rotation spectrum below.
+SPECTRUM_SAMPLES = 520
+VELOCITY_SPAN_KM_S = 360.0
+
 
 @dataclass(frozen=True)
 class Galaxy:

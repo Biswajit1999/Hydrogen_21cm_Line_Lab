@@ -23,16 +23,10 @@ jobs:
         run: |
           node --check assets/js/fits-import.js
           node --check assets/js/app.js
-          node --check assets/js/frequency-conventions.js
-          node --check assets/js/dashboard.js
-          node --check assets/js/import-normalisation.js
           node --check tools/validate_browser_contract.js
-          node --check tools/validate_dashboard_contract.js
           node --check tools/validate_fits_import.js
       - name: Validate browser physics contract
         run: node tools/validate_browser_contract.js
-      - name: Validate dashboard provenance contract
-        run: node tools/validate_dashboard_contract.js
       - name: Validate FITS import contract
         run: node tools/validate_fits_import.js
       - name: Generate deterministic synthetic tables

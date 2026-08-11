@@ -3,5 +3,5 @@ zero_velocity_rest_frequency,1420.40575177,1420.40575177,True
 receding_doppler_shift,1420.2162332262387,< 1420.40575177,True
 centre_line_zero_velocity,0.0,0.0,True
 longitude_velocity_sign_symmetry,0.0,0.0,True
-spectrum_has_emission,20.842664340363502,> 0,True
+spectrum_has_emission,20.8426643403635,> 0,True
 spectral_channel_count,512,512,True

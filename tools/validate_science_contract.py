@@ -10,7 +10,7 @@ import csv
 import math
 from pathlib import Path
 
-from generate_21cm_spectrum import (
+from radiative_transfer_contract import (
     COLUMN_FACTOR,
     REST_FREQ_MHZ,
     R0_KPC,
