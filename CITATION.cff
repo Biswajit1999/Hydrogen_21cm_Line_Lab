@@ -5,5 +5,8 @@ authors:
   - family-names: "Jana"
     given-names: "Biswajit"
 year: 2026
+version: 2.0.0
+date-released: 2026-09-27
 license: "MIT"
 repository-code: "https://github.com/Biswajit1999/Hydrogen_21cm_Line_Lab"
+url: "https://biswajit1999.github.io/Hydrogen_21cm_Line_Lab/"

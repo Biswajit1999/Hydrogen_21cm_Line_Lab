@@ -98,7 +98,9 @@ v_tan = Theta0 [1 - |sin(l)|]
 
 For longitudes outside this interval, the model must report no tangent velocity/frequency rather than extrapolating a fake value.
 
-The synthetic components are illustrative and are not fitted to a real Milky Way mass model, gas distribution, telescope beam, or survey cube. The longitude-velocity heat map is a synthetic diagnostic, not an observational data product.
+The optional synthetic components are illustrative and are not fitted to a real Milky Way mass model, gas distribution, telescope beam, or survey cube. The default longitude-velocity heat map is a reduced observational LAB product: 73 downloaded plane profiles resampled to a common velocity grid and interpolated in longitude for display.
+
+Observed local maxima are descriptive candidates. The dashboard must not equate them with independent clouds or named spiral arms. It must expose detector sensitivity, distinguish Galactocentric radius from heliocentric distance, retain any near/far ambiguity, and return no distance when the simplified geometry has no physical solution.
 
 ## Synthetic versus observed data
 
@@ -122,6 +124,9 @@ The validation suite should check:
 12. Inner-Galaxy tangent radius follows `R_t = R0 |sin(l)|` for the simplified geometry.
 13. Non-inner-Galaxy longitudes produce no tangent-point solution.
 14. Synthetic panels remain clearly labelled as idealised or synthetic.
+15. Bundled observational assets match their frozen checksums and retain negative baseline-noise samples.
+16. Peak stability remains bounded from zero to one across the declared 12-setting grid.
+17. Inner-Galaxy distance solutions preserve the near/far ambiguity.
 
 ## Validation command
 
@@ -133,13 +138,15 @@ python tools/validate_model.py
 python tools/validate_velocity_conventions.py
 python tools/validate_import_contract.py
 python tools/validate_science_contract.py
+python tools/validate_observations.py
+python tools/validate_peak_sensitivity.py
 node tools/validate_browser_contract.js
-node tools/validate_dashboard_contract.js
+node tools/validate_reference_dashboard_contract.js
 node tools/validate_fits_import.js
 ```
 
 `tools/validate_science_contract.py` writes `data/science_contract_summary.csv` and fails if any invariant above is broken.
 
-## Next scientific gap
+## Remaining scientific gaps
 
-The next defensible upgrade is to add provenance metadata to every rendered panel so the UI can explicitly distinguish synthetic model fields, browser-local imported spectra, and derived estimates. That should happen before any animation or rendering polish.
+The peak sensitivity grid is not a Bayesian or frequentist component model. A stronger study would start from survey cubes with their beam/spectral response, baseline and covariance information; fit opacity-aware components; propagate a non-flat rotation curve and streaming-motion prior; and validate arm association against independent tracers. Those extensions are not claimed here.

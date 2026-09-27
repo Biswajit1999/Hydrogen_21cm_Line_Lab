@@ -29,48 +29,42 @@ The source and processing metadata remain embedded in the JSON products. Credit 
 visualisation belongs to the HI4PI Collaboration; LAB spectra are supplied through the AIfA
 EU-HOU LAB extraction service.
 
-## Peak Interpretation: What the Spectrum Actually Shows
+The frozen LAB JSON has SHA-256
+`c3f5be0a2579e9823802ef61ef33d638a91bef4cee52fe1cae1feae3af50a158`; the HI4PI JPEG has
+SHA-256 `578c11c8784372df3c1b9db38ebe7764d7de514998501e719b407fdbfe1c0412`.
+CI verifies both byte streams and confirms that negative baseline-noise samples remain present.
 
-`data/observations/lab_plane_profiles.json` bundles real LAB survey spectra at **73 Galactic
-longitudes** (`l = -180` to `+180 deg` in 5-degree steps), not a single fixed sightline --
-dragging the longitude slider or clicking the sky panel loads a genuinely different observed
-brightness-temperature profile each time.
+## Peak Sensitivity: What the Spectrum Can Support
 
-A real HI spectrum along the Galactic plane is rarely a single smooth peak: distinct velocity
-components correspond to different gas clouds and spiral-arm crossings along the line of sight,
-each Doppler-shifted by its own circular-rotation velocity. The **PEAK INTERPRETATION** panel
-now detects these components automatically (a local-maximum finder with a noise floor and an
-8 km/s merge radius to avoid double-counting a single blended hump) and converts each one's
-observed LSR velocity into an implied Galactocentric radius by inverting the flat-rotation-curve
-relation:
+`data/observations/lab_plane_profiles.json` bundles LAB survey spectra at **73 Galactic
+longitudes** (`l = -180°` to `+180°` in 5° steps). Moving between those grid points linearly
+interpolates two neighbouring observed profiles; it does not create an independently observed
+sightline.
+
+The **PEAK SENSITIVITY** panel identifies descriptive local maxima. A peak can blend multiple
+clouds, self-absorption, velocity-crowded material, and beam-averaged structure; it is not a
+cloud decomposition or a spiral-arm catalogue. The baseline finder uses a 6% relative floor
+(with an absolute 1.5 K minimum) and an 8 km/s merge radius. Each candidate's displayed
+stability is the fraction of 12 declared settings that recover a maximum within 3 km/s: four
+floors (4%, 6%, 8%, 10%) crossed with three merge radii (6, 8, 10 km/s).
+
+Under a flat circular rotation curve, velocity implies a model-conditioned Galactocentric
+radius:
 
 ```text
 v_r(R, l) = V0 (R0/R - 1) sin(l)   =>   R = R0 / (1 + v_r / (V0 sin l))
 ```
 
-This is the standard kinematic-distance relation used to read spiral structure directly off an
-HI longitude-velocity diagram (Binney & Merrifield, 1998, *Galactic Astronomy*, section 9.1).
-Each detected peak is then classified by its implied radius relative to the solar circle:
+`R` is not heliocentric distance. The report separately solves the sightline geometry and shows
+both non-negative distance solutions. Two values expose the inner-Galaxy near/far ambiguity;
+no value means the inferred radius is geometrically inaccessible under the simplified model.
+Near `l = 0°` or `180°`, the velocity inversion is undefined.
 
-- **R < 0.35 R0** -- inner Galaxy / bar-influenced region (the flat-rotation-curve distance is
-  unreliable here; real inner-Galaxy kinematics are non-circular).
-- **0.35-0.85 R0** -- inner disk, typically tangent-point gas near a spiral-arm crossing.
-- **0.85-1.15 R0** -- solar neighbourhood, local (Orion) spur gas.
-- **1.15-1.8 R0** -- outer disk, likely Perseus or an outer-arm crossing.
-- **> 1.8 R0**, or `|sin(l)|` too close to zero -- increasingly unreliable or kinematically
-  undefined (a purely radial line of sight carries no orbital-velocity information).
-
-At the default `l = 32 deg` sightline, for example, the real LAB spectrum shows multiple resolved
-components spanning roughly `R ~ 5.6` to `11.1 kpc` -- direct observational evidence that the
-line of sight crosses several distinct spiral-arm segments, not one single cloud. This is exactly
-the kind of qualitative-to-quantitative reasoning a real HI survey paper walks through when
-reading a longitude-velocity diagram, now automated and attached to every real sightline in the
-dataset.
-
-**Caveat stated deliberately:** this inversion assumes a flat rotation curve and pure circular
-motion. Real gas has non-circular streaming (especially near the bar and spiral shocks), so the
-implied radii are order-of-magnitude kinematic distances, not survey-grade parallax measurements
--- the classification labels above say so explicitly rather than presenting a false precision.
+The reproducible audit in `data/peak_sensitivity.csv` contains 356 baseline candidates across
+the 73 stored profiles. Of these, 290 are recovered in all 12 settings and 66 depend on the
+declared detector tuning. The flat-circular geometry gives two distance solutions for 106
+candidates, one for 221, and no physical solution for 29. These counts diagnose the heuristic;
+they do not validate the rotation curve or identify Galactic structures.
 
 ## Simulation Overlay
 
@@ -146,6 +140,11 @@ The build script records the resampling operation in the JSON provenance block.
 - The HI4PI panel is a real all-sky projection from the Solar viewpoint, not a face-on disk.
 - The optional forward model omits radiative-transfer opacity corrections, non-circular flows,
   distance ambiguity resolution and cloud-by-cloud structure.
+- Local maxima are algorithm-dependent spectral features, not independent clouds. Their
+  sensitivity grid does not include correlated noise, alternative baselines, opacity, or a
+  formal mixture model.
+- Galactocentric radii and near/far distance solutions assume a flat circular rotation curve.
+  They are model-conditioned geometry, not measured distances or spiral-arm assignments.
 
 ## References
 
@@ -161,3 +160,4 @@ HI4PI Collaboration, 2016. HI4PI: A full-sky H I survey based on EBHIS and GASS.
 Kalberla, P.M.W., Burton, W.B., Hartmann, D., Arnal, E.M., Bajaja, E., Morras, R. and
 Poppel, W.G.L., 2005. The Leiden/Argentine/Bonn (LAB) Survey of Galactic H I.
 *Astronomy & Astrophysics*, 440, pp.775-782.
+https://doi.org/10.1051/0004-6361:20041864.
