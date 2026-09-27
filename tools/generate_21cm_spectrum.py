@@ -58,7 +58,8 @@ def density(x_kpc: float, y_kpc: float, galaxy: Galaxy) -> float:
     return max(0.0, radial * central_hole * arms)
 
 
-def generate_spectrum(galaxy: Galaxy = Galaxy(), bins: int = 512) -> list[dict[str, float]]:
+def generate_spectrum(galaxy: Galaxy | None = None, bins: int = 512) -> list[dict[str, float]]:
+    galaxy = galaxy or Galaxy()
     velocities = [-300.0 + index * 600.0 / (bins - 1) for index in range(bins)]
     brightness = [0.0] * bins
     longitude = math.radians(galaxy.longitude_degrees)

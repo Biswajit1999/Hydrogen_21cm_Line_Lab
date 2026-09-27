@@ -7,8 +7,8 @@ import math
 from pathlib import Path
 
 from generate_21cm_spectrum import (
-    Galaxy,
     REST_FREQUENCY_MHZ,
+    Galaxy,
     doppler_frequency,
     generate_spectrum,
     radial_velocity,

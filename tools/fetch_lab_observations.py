@@ -9,7 +9,6 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data" / "observations"
 LAB_DOWNLOAD = "https://www.astro.uni-bonn.de/hisurvey/euhou/LABprofile/download.php"

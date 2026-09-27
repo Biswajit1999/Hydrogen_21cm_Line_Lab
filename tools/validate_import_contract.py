@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import re
 from io import StringIO
+from itertools import pairwise
 
 COLUMN_FACTOR = 1.823e18
 VELOCITY_COLUMNS = {"velocity_km_s", "velocity", "v_lsr_km_s", "v_lsr", "v_km_s", "v"}
@@ -34,7 +35,7 @@ def parse_csv(text: str) -> list[tuple[float, float]]:
 
 
 def thin_column(points: list[tuple[float, float]]) -> float:
-    integral = sum(0.5 * (t0 + t1) * (v1 - v0) for (v0, t0), (v1, t1) in zip(points, points[1:]))
+    integral = sum(0.5 * (t0 + t1) * (v1 - v0) for (v0, t0), (v1, t1) in pairwise(points))
     return COLUMN_FACTOR * integral
 
 

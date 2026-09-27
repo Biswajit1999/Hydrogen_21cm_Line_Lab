@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import csv
 import math
+from itertools import pairwise
 from pathlib import Path
 
 from radiative_transfer_contract import (
     COLUMN_FACTOR,
-    REST_FREQ_MHZ,
     R0_KPC,
+    REST_FREQ_MHZ,
     generate_spectrum,
     integrate_columns,
     tangent_point,
@@ -146,7 +147,7 @@ def main() -> None:
     record(
         checks,
         "synthetic_rows_are_ordered",
-        all(a["velocity_km_s"] < b["velocity_km_s"] for a, b in zip(narrow_rows, narrow_rows[1:])),
+        all(a["velocity_km_s"] < b["velocity_km_s"] for a, b in pairwise(narrow_rows)),
         "strictly increasing velocity grid",
         "monotonic velocity axis",
     )

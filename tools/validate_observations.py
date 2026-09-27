@@ -3,13 +3,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 OBSERVATIONS = ROOT / "data" / "observations"
+EXPECTED_SHA256 = {
+    "lab_plane_profiles.json": "c3f5be0a2579e9823802ef61ef33d638a91bef4cee52fe1cae1feae3af50a158",
+    "hi4pi_allsky.jpg": "578c11c8784372df3c1b9db38ebe7764d7de514998501e719b407fdbfe1c0412",
+}
 
 
 def require(condition: bool, message: str) -> None:
@@ -24,6 +28,9 @@ def main() -> None:
     require(profile_path.exists(), "LAB observational profile asset is missing")
     require(image_path.exists(), "HI4PI all-sky image asset is missing")
     require(metadata_path.exists(), "HI4PI metadata asset is missing")
+    for filename, expected in EXPECTED_SHA256.items():
+        measured = hashlib.sha256((OBSERVATIONS / filename).read_bytes()).hexdigest()
+        require(measured == expected, f"{filename} checksum changed: {measured}")
 
     dataset = json.loads(profile_path.read_text(encoding="utf-8"))
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -42,6 +49,7 @@ def main() -> None:
     temperatures = [value for profile in profiles for value in profile["brightnessK"]]
     require(all(math.isfinite(value) for value in temperatures), "non-finite LAB brightness sample")
     require(max(temperatures) > 100, "LAB plane brightness content is unexpectedly weak")
+    require(min(temperatures) < 0, "expected baseline-noise samples were censored")
     require(all(len(profile["brightnessK"]) == len(velocity) for profile in profiles), "profile length mismatch")
 
     image_bytes = image_path.read_bytes()
@@ -53,7 +61,8 @@ def main() -> None:
     print(
         "Validated observational bundle: "
         f"{len(profiles)} LAB profiles x {len(velocity)} channels; "
-        f"peak T_B={max(temperatures):.3f} K; HI4PI image={len(image_bytes)} bytes"
+        f"T_B range={min(temperatures):.3f}..{max(temperatures):.3f} K; "
+        f"HI4PI image={len(image_bytes)} bytes; checksums match"
     )
 
 
