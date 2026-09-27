@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Validate the reduced observational H I assets bundled for the browser lab."""
 
 from __future__ import annotations

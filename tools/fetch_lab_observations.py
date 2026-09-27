@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build compact observational H I assets from public LAB and HI4PI products."""
 
 from __future__ import annotations
