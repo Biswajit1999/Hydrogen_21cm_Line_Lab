@@ -336,7 +336,7 @@
     if (!products.modelComponents.length) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 4;
+      cell.colSpan = 5;
       cell.className = "empty";
       cell.textContent = "ENABLE MODEL OVERLAY FOR COMPUTED CELLS";
       row.appendChild(cell);
@@ -374,16 +374,20 @@
     }
     body.replaceChildren(...peaks.map((peak) => {
       const row = document.createElement("tr");
+      const distanceText = peak.distanceSolutionsKpc.length
+        ? peak.distanceSolutionsKpc.map((value) => value.toFixed(2)).join(" / ")
+        : "--";
       const cells = [
         peak.velocityKmS.toFixed(1),
         peak.brightnessK.toFixed(2),
         peak.radiusKpc === null ? "--" : peak.radiusKpc.toFixed(2),
-        peak.classification,
+        distanceText,
+        `${Math.round(100 * peak.stabilityFraction)}%`,
       ];
       cells.forEach((text, columnIndex) => {
         const cell = document.createElement("td");
         cell.textContent = text;
-        if (columnIndex === 3) cell.className = "origin";
+        if (columnIndex === 3) cell.title = `${peak.radialRegime}; near/far solutions are model-conditioned`;
         row.appendChild(cell);
       });
       return row;

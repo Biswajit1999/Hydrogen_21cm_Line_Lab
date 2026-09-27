@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b0f19">
     <meta name="description" content="Observation-led Galactic neutral hydrogen laboratory using LAB spectra and HI4PI imaging with an optional kinematic model overlay.">
+    <meta name="author" content="Biswajit Jana">
+    <link rel="canonical" href="https://biswajit1999.github.io/Hydrogen_21cm_Line_Lab/">
+    <meta property="og:title" content="Hydrogen 21cm Line Lab | Observational H I Console">
+    <meta property="og:description" content="A reproducible LAB and HI4PI explorer with explicit peak-sensitivity and kinematic-distance ambiguity diagnostics.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://biswajit1999.github.io/Hydrogen_21cm_Line_Lab/">
     <title>Hydrogen 21cm Line Lab | Observational H I Console</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/style.css">
@@ -135,11 +141,12 @@
             </table>
           </article>
           <article class="panel peaks">
-            <header><h2>PEAK INTERPRETATION</h2><span>KINEMATIC DISTANCE</span></header>
+            <header><h2>PEAK SENSITIVITY</h2><span>FLAT-CIRCULAR MODEL / NOT ARM IDS</span></header>
             <table>
-              <thead><tr><th>V (km/s)</th><th>T_B (K)</th><th>R (kpc)</th><th>Likely origin</th></tr></thead>
+              <thead><tr><th>V</th><th>T_B</th><th>R_GC</th><th>d near/far</th><th>stable</th></tr></thead>
               <tbody id="peak-interpretation"></tbody>
             </table>
+            <p class="dataset">Local maxima are descriptive candidates. R_GC and heliocentric d are model-conditioned; two d values expose the inner-Galaxy near/far ambiguity. Stability is selection across 12 threshold/merge settings.</p>
           </article>
           <article class="panel notes">
             <header><h2>DATA PROVENANCE</h2><span>OBSERVATION FIRST</span></header>

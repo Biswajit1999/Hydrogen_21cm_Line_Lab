@@ -299,14 +299,12 @@ function cloneSpectrum(spectrum) {
   };
 }
 
-// Detects local-maximum velocity components in the observed spectrum (distinct gas
-// clouds/spiral-arm crossings along the line of sight show up as separate peaks in a
-// longitude-velocity profile). A peak must exceed both a noise floor and a minimum
-// prominence above its neighbouring local minima to be counted, so a single broad hump
-// is not reported as several spurious peaks.
-function detectPeaks(spectrum) {
+// Detects descriptive local maxima. Peaks can blend multiple structures and are not a
+// cloud or spiral-arm catalogue. Threshold and merge-radius sensitivity is reported
+// explicitly by interpretPeaks rather than hidden behind a single tuning choice.
+function detectPeaks(spectrum, thresholdFraction = 0.06, mergeRadiusKmS = 8) {
   const brightness = spectrum.brightness;
-  const noiseFloor = Math.max(1.5, maximumValue(brightness) * 0.06);
+  const noiseFloor = Math.max(1.5, maximumValue(brightness) * thresholdFraction);
   const peaks = [];
   for (let index = 2; index < brightness.length - 2; index += 1) {
     const value = brightness[index];
@@ -317,10 +315,10 @@ function detectPeaks(spectrum) {
     if (!isLocalMax) continue;
     peaks.push({ index, velocityKmS: spectrum.velocity[index], brightnessK: value });
   }
-  // merge peaks that are within 8 km/s of a higher neighbour (same blended component)
+  // Retain only the highest local maximum inside the declared merge radius.
   const merged = [];
   for (const peak of peaks.sort((a, b) => b.brightnessK - a.brightnessK)) {
-    if (merged.some((kept) => Math.abs(kept.velocityKmS - peak.velocityKmS) < 8)) continue;
+    if (merged.some((kept) => Math.abs(kept.velocityKmS - peak.velocityKmS) < mergeRadiusKmS)) continue;
     merged.push(peak);
   }
   return merged.sort((a, b) => a.velocityKmS - b.velocityKmS).slice(0, 6);
@@ -335,10 +333,8 @@ function maximumValue(values) {
 // Converts an observed LSR radial velocity at a given Galactic longitude into an implied
 // Galactocentric radius, inverting the flat-rotation-curve formula
 // v_r(R, l) = V0 (R0/R - 1) sin(l)  =>  R = R0 / (1 + v_r / (V0 sin l)).
-// This is the standard kinematic-distance relation used to read spiral structure off an
-// HI longitude-velocity diagram (e.g. Binney & Merrifield, 1998, "Galactic Astronomy",
-// section 9.1). It is only meaningful for |sin(l)| well away from zero and breaks down
-// near non-circular motion (bar streaming, spiral shocks), which is stated explicitly.
+// This returns a model-conditioned Galactocentric radius, not a heliocentric distance.
+// It is meaningful only away from radial sightlines and under the flat circular model.
 function impliedRadiusKpc(velocityKmS, longitudeDegrees, solarRadiusKpc, localSpeedKmS) {
   const sinL = Math.sin((longitudeDegrees * Math.PI) / 180);
   if (Math.abs(sinL) < 0.05) return null;
@@ -347,23 +343,44 @@ function impliedRadiusKpc(velocityKmS, longitudeDegrees, solarRadiusKpc, localSp
   return solarRadiusKpc / denominator;
 }
 
-function classifyRadius(radiusKpc, solarRadiusKpc) {
-  if (radiusKpc === null) return "kinematically undefined near l = 0 deg or 180 deg (line of sight is radial, not orbital)";
-  if (radiusKpc < solarRadiusKpc * 0.35) return "inner Galaxy / bar-influenced region -- flat-rotation-curve distance is unreliable here";
-  if (radiusKpc < solarRadiusKpc * 0.85) return "inner disk, likely tangent-point gas near a spiral-arm crossing";
-  if (radiusKpc < solarRadiusKpc * 1.15) return "solar neighbourhood -- local (Orion) spur gas";
-  if (radiusKpc < solarRadiusKpc * 1.8) return "outer disk -- likely Perseus or outer-arm gas";
-  return "far outer disk or non-circular motion -- flat-rotation-curve distance is increasingly uncertain";
+function heliocentricDistanceSolutions(radiusKpc, longitudeDegrees, solarRadiusKpc) {
+  if (radiusKpc === null) return [];
+  const longitude = longitudeDegrees * Math.PI / 180;
+  const projected = solarRadiusKpc * Math.cos(longitude);
+  const discriminant = radiusKpc ** 2 - (solarRadiusKpc * Math.sin(longitude)) ** 2;
+  if (discriminant < 0) return [];
+  const root = Math.sqrt(discriminant);
+  return [projected - root, projected + root]
+    .filter((distance) => distance >= 0)
+    .filter((distance, index, values) => index === 0 || Math.abs(distance - values[index - 1]) > 1e-6);
+}
+
+function radialRegime(radiusKpc, solarRadiusKpc) {
+  if (radiusKpc === null) return "undefined";
+  if (radiusKpc < solarRadiusKpc * 0.85) return "inner disk";
+  if (radiusKpc <= solarRadiusKpc * 1.15) return "solar-radius regime";
+  return "outer disk";
 }
 
 function interpretPeaks(spectrum, longitudeDegrees, solarRadiusKpc, localSpeedKmS) {
+  const configurations = [];
+  for (const threshold of [0.04, 0.06, 0.08, 0.10]) {
+    for (const mergeRadius of [6, 8, 10]) {
+      configurations.push(detectPeaks(spectrum, threshold, mergeRadius));
+    }
+  }
   return detectPeaks(spectrum).map((peak) => {
     const radiusKpc = impliedRadiusKpc(peak.velocityKmS, longitudeDegrees, solarRadiusKpc, localSpeedKmS);
+    const selectedCount = configurations.filter((candidateSet) =>
+      candidateSet.some((candidate) => Math.abs(candidate.velocityKmS - peak.velocityKmS) <= 3)
+    ).length;
     return {
       velocityKmS: peak.velocityKmS,
       brightnessK: peak.brightnessK,
       radiusKpc,
-      classification: classifyRadius(radiusKpc, solarRadiusKpc),
+      distanceSolutionsKpc: heliocentricDistanceSolutions(radiusKpc, longitudeDegrees, solarRadiusKpc),
+      radialRegime: radialRegime(radiusKpc, solarRadiusKpc),
+      stabilityFraction: selectedCount / configurations.length,
     };
   });
 }

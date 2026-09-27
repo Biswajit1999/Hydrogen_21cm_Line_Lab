@@ -134,9 +134,13 @@ table { border-collapse: collapse; font: .74rem var(--mono); width: 100%; }
 th { color: var(--muted); font: 600 .68rem var(--sans); text-align: left; text-transform: uppercase; }
 td, th { border-bottom: 1px solid var(--line); padding: .5rem .6rem; }
 td:nth-child(n+3) { color: var(--accent); text-align: right; }
-.peaks table { table-layout: fixed; }
-.peaks td.origin { color: var(--muted); font: .72rem var(--sans); text-align: left; white-space: normal; }
-.peaks th:last-child, .peaks td.origin { width: 46%; }
+.peaks { overflow: auto; }
+.peaks table { font-size: .66rem; table-layout: fixed; }
+.peaks td, .peaks th { padding: .45rem .3rem; }
+.peaks th:nth-child(1) { width: 14%; }
+.peaks th:nth-child(2), .peaks th:nth-child(3) { width: 15%; }
+.peaks th:nth-child(4) { width: 36%; }
+.peaks th:nth-child(5) { width: 20%; }
 .samples td.empty { color: var(--muted); line-height: 1.7; padding: 1rem .6rem; text-align: left; }
 
 .notes p { color: var(--muted); font-size: .8rem; line-height: 1.6; margin: 0; padding: .8rem; }
