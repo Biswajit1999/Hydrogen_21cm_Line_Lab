@@ -5,10 +5,11 @@ The LAB brightness profiles alone do not constrain optical depth or distance.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
 import random
-from typing import Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
+from itertools import pairwise
 
 COLUMN_FACTOR = 1.8224e18  # cm^-2 per K km/s; optically thin H I emission
 
@@ -23,12 +24,12 @@ def _finite(values: Sequence[float], name: str, minimum: int = 2) -> list[float]
 def integration_weights(velocity_km_s: Sequence[float], lower: float, upper: float) -> list[float]:
     """Exact trapezoidal weights for piecewise-linear interpolation over [lower, upper]."""
     v = _finite(velocity_km_s, "velocity")
-    if any(b <= a for a, b in zip(v, v[1:])):
+    if any(b <= a for a, b in pairwise(v)):
         raise ValueError("velocity grid must be strictly increasing")
     if not all(math.isfinite(x) for x in (lower, upper)) or not v[0] <= lower < upper <= v[-1]:
         raise ValueError("integration bounds must be finite and inside the velocity grid")
     weights = [0.0] * len(v)
-    for i, (left, right) in enumerate(zip(v, v[1:])):
+    for i, (left, right) in enumerate(pairwise(v)):
         a, b = max(lower, left), min(upper, right)
         if b <= a:
             continue
@@ -102,10 +103,10 @@ def rebin_piecewise_linear(velocity_km_s: Sequence[float], brightness_k: Sequenc
     edges = _finite(new_edges_km_s, "new edges")
     if len(v) != len(y):
         raise ValueError("velocity and brightness lengths differ")
-    if any(b <= a for a, b in zip(edges, edges[1:])):
+    if any(b <= a for a, b in pairwise(edges)):
         raise ValueError("new edges must be strictly increasing")
     return [math.fsum(w * z for w, z in zip(integration_weights(v, a, b), y)) / (b - a)
-            for a, b in zip(edges, edges[1:])]
+            for a, b in pairwise(edges)]
 
 
 def _distance_solutions(velocity: float, longitude_deg: float, r0: float, v0: float) -> list[float]:

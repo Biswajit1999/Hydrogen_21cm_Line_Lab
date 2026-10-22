@@ -6,13 +6,17 @@ No archive download or external dependency is required. Does not modify survey a
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
 import json
 import math
+from dataclasses import asdict
 from pathlib import Path
 from statistics import median
 
-from tools.hi_robustness import column_density_with_noise, distance_sensitivity, rebin_piecewise_linear
+from tools.hi_robustness import (
+    column_density_with_noise,
+    distance_sensitivity,
+    rebin_piecewise_linear,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
